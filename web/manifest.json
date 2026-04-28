@@ -1,11 +1,11 @@
 {
-    "name": "medimap",
-    "short_name": "medimap",
+    "name": "MediMap",
+    "short_name": "MediMap",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#000000",
+    "theme_color": "#22BEA5",
+    "description": "Find nearby health facilities and prepare SOS location alerts.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -1,5 +1,5 @@
 name: medimap
-description: "A new Flutter project."
+description: "MediMap helps users find nearby health facilities, save Medical ID details, and send SOS location alerts."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -37,8 +37,11 @@ dependencies:
   google_maps_flutter: ^2.14.0
   geolocator: ^14.0.2
   url_launcher: ^6.3.2
+  firebase_core: ^4.2.1
   firebase_analytics: ^12.1.1
   firebase_crashlytics: ^5.0.7
+  cloud_firestore: ^6.0.3
+  image_picker: ^1.2.1
   shared_preferences: ^2.5.4
 
 dev_dependencies:
@@ -60,6 +63,7 @@ flutter:
   assets:
     - assets/data/hospitals.json
     - assets/images/cross.png
+    - assets/images/medimap_logo.png
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

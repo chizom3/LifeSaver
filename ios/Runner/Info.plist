@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Medimap</string>
+	<string>MediMap</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,13 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>medimap</string>
+	<string>MediMap</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>MediMap uses your location to find and sort nearby hospitals.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>MediMap uses your location to share your emergency position when you send an SOS.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>MediMap lets you choose a profile photo for your Medical ID.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

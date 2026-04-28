@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -10,6 +8,19 @@ import 'package:firebase_core/firebase_core.dart'; // Fixes 'Firebase'
 import 'package:firebase_crashlytics/firebase_crashlytics.dart'; // Fixes 'Crashlytics'
 import 'firebase_options.dart'; // Fixes 'DefaultFirebaseOptions'
 import 'profile_page.dart';
+import 'repositories/hospital_repository.dart';
+import 'services/favorites_service.dart';
+import 'services/location_service.dart';
+import 'services/report_service.dart';
+import 'services/sos_service.dart';
+import 'widgets/hospital_detail_sheet.dart';
+import 'widgets/hospital_list_view.dart';
+import 'widgets/hospital_map_view.dart';
+import 'widgets/hospital_search_filters.dart';
+import 'widgets/medical_disclaimer_page.dart';
+import 'widgets/onboarding_page.dart';
+import 'widgets/privacy_policy_page.dart';
+import 'widgets/sos_sheets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
@@ -46,88 +57,328 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   // STATE VARIABLES
   int _selectedIndex = 0; // 0 = Map, 1 = List
-  GoogleMapController? _controller;
-  Set<Marker> _markers = {};
   List<Hospital> _allHospitals = [];
+  LatLng? _currentLocation;
+  String? _selectedHospitalId;
   bool _isLoading = true;
+  bool _hospitalLoadFailed = false;
+  bool _hasLocationPermission = false;
+  bool _showOnboarding = false;
+  bool _hasAcceptedMedicalDisclaimer = false;
+  bool _hasEmergencyContact = false;
   final AnalyticsService _analytics = AnalyticsService();
-  BitmapDescriptor? _hospitalIcon; // <--- Add this
+  final FavoritesService _favoritesService = FavoritesService();
+  final HospitalRepository _hospitalRepository = HospitalRepository();
+  final LocationService _locationService = LocationService();
+  final ReportService _reportService = ReportService();
+  final SosService _sosService = SosService();
+  BitmapDescriptor? _hospitalIcon;
+  final TextEditingController _searchController = TextEditingController();
+  final Stopwatch _startupWatch = Stopwatch();
+  String _searchQuery = '';
+  String? _selectedState;
+  String? _selectedLga;
+  bool _showFavoritesOnly = false;
+  double? _selectedRadiusKm;
+  String _sortMode = 'nearest';
+  Set<String> _favoriteHospitalIds = {};
+  int _visibleHospitalCount = 100;
 
   @override
   void initState() {
     super.initState();
+    _startupWatch.start();
     _initializeData(); // Just call this one function
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadCustomMarker() async {
     try {
-      final icon = await BitmapDescriptor.fromAssetImage(
+      final icon = await BitmapDescriptor.asset(
         const ImageConfiguration(size: Size(48, 48)),
         "assets/images/cross.png",
       );
-      // We don't strictly need setState here since _loadHospitals calls it later,
-      // but keeping it is safe.
+      if (!mounted) return;
       setState(() {
         _hospitalIcon = icon;
       });
     } catch (e) {
-      print("Error loading custom icon: $e");
+      debugPrint("Error loading custom icon: $e");
     }
   }
 
   Future<void> _initializeData() async {
+    final initWatch = Stopwatch()..start();
+    await _loadOnboardingState();
+
     // 1. Load the Icon FIRST and wait for it
     await _loadCustomMarker();
 
     // 2. Then load the hospitals (Now they will use the loaded icon)
     await _loadHospitals();
 
+    await _loadFavorites();
+    await _loadMedicalIdStatus();
+
     // 3. Finally get user location
     await _determinePosition();
+    initWatch.stop();
+    _startupWatch.stop();
+    debugPrint(
+      'MediMap startup: init=${initWatch.elapsedMilliseconds}ms total=${_startupWatch.elapsedMilliseconds}ms hospitals=${_allHospitals.length}',
+    );
+  }
+
+  Future<void> _loadOnboardingState() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _showOnboarding = !(prefs.getBool('has_seen_onboarding') ?? false);
+      _hasAcceptedMedicalDisclaimer =
+          prefs.getBool('accepted_medical_disclaimer') ?? false;
+    });
+  }
+
+  Future<void> _acceptMedicalDisclaimer() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('accepted_medical_disclaimer', true);
+    if (!mounted) return;
+    setState(() {
+      _hasAcceptedMedicalDisclaimer = true;
+    });
+  }
+
+  Future<void> _finishOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_seen_onboarding', true);
+    if (!mounted) return;
+    setState(() {
+      _showOnboarding = false;
+    });
+  }
+
+  Future<void> _openMedicalIdFromOnboarding() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProfilePage()),
+    );
+    await _loadMedicalIdStatus();
+    await _finishOnboarding();
+  }
+
+  Future<void> _openMedicalId() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProfilePage()),
+    );
+    await _loadMedicalIdStatus();
+  }
+
+  Future<void> _loadFavorites() async {
+    final favoriteIds = await _favoritesService.loadFavoriteIds();
+    if (!mounted) return;
+    setState(() {
+      _favoriteHospitalIds = favoriteIds;
+    });
+  }
+
+  Future<void> _loadMedicalIdStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final contacts = prefs.getStringList('contact_phones') ?? [];
+    final legacyContact = (prefs.getString('contact') ?? '').trim();
+    if (!mounted) return;
+    setState(() {
+      _hasEmergencyContact =
+          contacts.any((contact) {
+            return _cleanPhoneNumber(contact).isNotEmpty;
+          }) ||
+          _cleanPhoneNumber(legacyContact).isNotEmpty;
+    });
   }
 
   // 1. Load Data
   Future<void> _loadHospitals() async {
     try {
-      final String response = await rootBundle.loadString(
-        'assets/data/hospitals.json',
+      final watch = Stopwatch()..start();
+      final hospitals = await _hospitalRepository.loadHospitals();
+      watch.stop();
+      debugPrint(
+        'MediMap data: loaded ${hospitals.length} hospitals in ${watch.elapsedMilliseconds}ms',
       );
-      final List<dynamic> data = json.decode(response);
+      if (!mounted) return;
       setState(() {
-        _allHospitals = data.map((json) => Hospital.fromJson(json)).toList();
+        _allHospitals = hospitals;
+        _hospitalLoadFailed = false;
       });
     } catch (e) {
-      print("Error loading data: $e");
+      debugPrint("Error loading data: $e");
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _hospitalLoadFailed = true;
+      });
+      _showMessage("Could not load hospital data. Please restart the app.");
     }
+  }
+
+  Future<Position?> _getCurrentPosition({
+    LocationAccuracy accuracy = LocationAccuracy.best,
+  }) async {
+    final result = await _locationService.getCurrentPosition(
+      accuracy: accuracy,
+    );
+
+    if (result.isSuccess) {
+      if (mounted) {
+        setState(() => _hasLocationPermission = true);
+      }
+      return result.position;
+    }
+
+    if (!mounted) return null;
+    setState(() => _hasLocationPermission = false);
+
+    switch (result.failure) {
+      case LocationFailure.serviceDisabled:
+        _showMessage(
+          "Please turn on location services to find nearby hospitals.",
+        );
+      case LocationFailure.permissionDenied:
+        _showMessage(
+          "Location permission is needed to sort hospitals by distance.",
+        );
+      case LocationFailure.permissionDeniedForever:
+        _showMessage(
+          "Location permission is blocked. Enable it from your phone settings.",
+        );
+      case LocationFailure.unavailable:
+      case null:
+        _showMessage("Could not get your current location. Please try again.");
+    }
+
+    return null;
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _cleanPhoneNumber(String phone) {
+    final trimmed = phone.trim();
+    if (trimmed.isEmpty || trimmed.toLowerCase().contains('no phone')) {
+      return '';
+    }
+
+    final hasLeadingPlus = trimmed.startsWith('+');
+    final digitsOnly = trimmed.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly.isEmpty) return '';
+
+    return hasLeadingPlus ? '+$digitsOnly' : digitsOnly;
+  }
+
+  String _hospitalId(Hospital hospital) {
+    return _hospitalRepository.hospitalId(hospital);
+  }
+
+  bool _isFavorite(Hospital hospital) {
+    return _favoritesService.isFavorite(hospital, _favoriteHospitalIds);
+  }
+
+  Future<void> _toggleFavorite(Hospital hospital) async {
+    final id = _hospitalId(hospital);
+    final updatedFavorites = Set<String>.from(_favoriteHospitalIds);
+    final wasFavorite = updatedFavorites.contains(id);
+
+    if (wasFavorite) {
+      updatedFavorites.remove(id);
+    } else {
+      updatedFavorites.add(id);
+    }
+
+    await _favoritesService.saveFavoriteIds(updatedFavorites);
+
+    if (!mounted) return;
+    setState(() {
+      _favoriteHospitalIds = updatedFavorites;
+    });
+    _onFiltersChanged();
+    _showMessage(
+      wasFavorite ? "Removed from saved hospitals." : "Saved hospital.",
+    );
+  }
+
+  List<String> get _stateOptions {
+    return _hospitalRepository.stateOptions(_allHospitals);
+  }
+
+  List<String> get _lgaOptions {
+    return _hospitalRepository.lgaOptions(_allHospitals, _selectedState);
+  }
+
+  List<Hospital> get _filteredHospitals {
+    return _hospitalRepository.filterHospitals(
+      _allHospitals,
+      HospitalFilterCriteria(
+        query: _searchQuery,
+        state: _selectedState,
+        lga: _selectedLga,
+        favoritesOnly: _showFavoritesOnly,
+        favoriteIds: _favoriteHospitalIds,
+        radiusKm: _selectedRadiusKm,
+        sortMode: _sortMode,
+        currentLatitude: _currentLocation?.latitude,
+        currentLongitude: _currentLocation?.longitude,
+      ),
+    );
+  }
+
+  void _onFiltersChanged() {
+    _visibleHospitalCount = 100;
   }
 
   // 2. Get Location & Sort List
   Future<void> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
-    }
-
-    Position position = await Geolocator.getCurrentPosition();
-
-    // CALCULATE DISTANCE FOR EVERY HOSPITAL
-    for (var hospital in _allHospitals) {
-      if (hospital.latitude != 0.0 && hospital.longitude != 0.0) {
-        hospital.distanceInMeters = Geolocator.distanceBetween(
-          position.latitude,
-          position.longitude,
-          hospital.latitude,
-          hospital.longitude,
+    final position = await _getCurrentPosition();
+    if (position == null) {
+      final lastKnownLocation = await _locationService.loadLastKnownLocation();
+      if (lastKnownLocation != null) {
+        _applyLocation(
+          LatLng(lastKnownLocation.latitude, lastKnownLocation.longitude),
         );
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+        });
+        _showMessage("Using your last known location.");
+        return;
       }
+
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      return;
     }
+    final location = LatLng(position.latitude, position.longitude);
+    _applyLocation(location);
+  }
+
+  void _applyLocation(LatLng location) {
+    _currentLocation = location;
+
+    _locationService.updateHospitalDistancesFromCoordinates(
+      _allHospitals,
+      latitude: location.latitude,
+      longitude: location.longitude,
+    );
 
     // SORT THE LIST (Nearest first)
     _allHospitals.sort((a, b) {
@@ -136,119 +387,87 @@ class _MainScreenState extends State<MainScreen> {
       return a.distanceInMeters!.compareTo(b.distanceInMeters!);
     });
 
-    // Update Map Markers
-    _updateMarkers(position);
-
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
     });
-
-    // Zoom Map to User
-    _controller?.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(position.latitude, position.longitude),
-          zoom: 15,
-        ),
-      ),
-    );
   }
 
-  // 3. Create Map Markers
-  void _updateMarkers(Position userPos) {
-    Set<Marker> newMarkers = {};
-
-    // Me
-    newMarkers.add(
-      Marker(
-        markerId: const MarkerId('me'),
-        position: LatLng(userPos.latitude, userPos.longitude),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-      ),
-    );
-
-    // Hospitals (Only show nearest 50 on map to keep it clean)
-    for (var hospital in _allHospitals.take(50)) {
-      if (hospital.distanceInMeters == null) continue;
-
-      newMarkers.add(
-        Marker(
-          markerId: MarkerId(hospital.name),
-          position: LatLng(hospital.latitude, hospital.longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-          onTap: () => _showHospitalDetails(hospital),
-        ),
-      );
-    }
-
-    setState(() {
-      _markers = newMarkers;
-    });
-  }
-
-  // 4. ACTION: Show Details Sheet (Used by both Map and List)
   void _showHospitalDetails(Hospital hospital) {
-    showModalBottomSheet(
+    _analytics.logHospitalView(hospital.name, hospital.state);
+    final cleanedPhone = _cleanPhoneNumber(hospital.phone);
+
+    showHospitalDetailSheet(
+      context: context,
+      hospital: hospital,
+      isFavorite: _isFavorite(hospital),
+      canCall: cleanedPhone.isNotEmpty,
+      phoneText: cleanedPhone.isEmpty ? 'No phone available' : hospital.phone,
+      onToggleFavorite: () => _toggleFavorite(hospital),
+      onCall: () {
+        _analytics.logCall(hospital.name);
+        _launchPhone(hospital.phone);
+      },
+      onDirections: () {
+        _analytics.logNavigation(hospital.name);
+        _launchMap(hospital);
+      },
+      onReportInfo: () {
+        Navigator.pop(context);
+        _showReportInfoSheet(hospital);
+      },
+    );
+  }
+
+  Future<void> _showReportInfoSheet(Hospital hospital) {
+    const reasons = [
+      'Wrong phone number',
+      'Wrong location',
+      'Facility is closed',
+      'Duplicate facility',
+      'Other correction',
+    ];
+
+    return showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          height: 250,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             children: [
-              Text(
-                hospital.name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
-                maxLines: 2,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               Text(
-                "${hospital.distanceText} • ${hospital.ward}",
-                style: const TextStyle(color: Colors.grey),
+                'Report wrong info',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-              const Divider(height: 30),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                      ),
-                      icon: const Icon(Icons.call),
-                      label: const Text("Call"),
-                      onPressed: () {
-                        _analytics.logCall(hospital.name); // <--- ADD THIS LINE
-                        _launchPhone(hospital.phone);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                      ),
-                      icon: const Icon(Icons.directions),
-                      label: const Text("Go"),
-                      onPressed: () {
-                        _analytics.logNavigation(
-                          hospital.name,
-                        ); // <--- ADD THIS LINE
-                        _launchMap(hospital);
-                      },
-                    ),
-                  ),
-                ],
-              ),
+              const SizedBox(height: 4),
+              Text(hospital.name, style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 12),
+              for (final reason in reasons)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.report_outlined),
+                  title: Text(reason),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _launchReportEmail(hospital: hospital, reason: reason);
+                  },
+                ),
             ],
           ),
         );
@@ -256,10 +475,50 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  Future<void> _launchReportEmail({
+    required Hospital hospital,
+    required String reason,
+  }) async {
+    final report = FacilityReport.fromHospital(
+      hospital: hospital,
+      reason: reason,
+    );
+    final submitted = await _reportService.submitReport(report);
+
+    final uri = Uri(
+      scheme: 'mailto',
+      path: 'reports@medimap.app',
+      queryParameters: {
+        'subject': 'MediMap facility correction: ${hospital.name}',
+        'body': report.toEmailBody(),
+      },
+    );
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      _showMessage(
+        submitted
+            ? "Report submitted. Email could not open on this device."
+            : "Report saved locally. Email could not open on this device.",
+      );
+    }
+  }
+
   // Helpers for Launcher
   Future<void> _launchPhone(String phone) async {
-    final Uri launchUri = Uri(scheme: 'tel', path: phone);
-    if (!await launchUrl(launchUri)) print("Could not launch dialer");
+    final cleanedPhone = _cleanPhoneNumber(phone);
+    if (cleanedPhone.isEmpty) {
+      _showMessage("This hospital does not have a valid phone number.");
+      return;
+    }
+
+    final Uri launchUri = Uri(scheme: 'tel', path: cleanedPhone);
+    if (await canLaunchUrl(launchUri)) {
+      await launchUrl(launchUri);
+    } else {
+      _showMessage("Could not open the phone dialer on this device.");
+    }
   }
 
   Future<void> _launchMap(Hospital h) async {
@@ -267,44 +526,106 @@ class _MainScreenState extends State<MainScreen> {
     final Uri googleMapsUrl = Uri.parse(
       "https://www.google.com/maps/dir/?api=1&destination=${h.latitude},${h.longitude}",
     );
-    if (!await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication))
-      print("Could not launch maps");
+    if (!await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication)) {
+      _showMessage("Could not open maps on this device.");
+    }
   }
 
   Future<void> _sendSOS() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? contact = prefs.getString('contact');
+    final contactNames = prefs.getStringList('contact_names') ?? [];
+    var contactPhones = prefs.getStringList('contact_phones') ?? [];
+    final legacyContact = _cleanPhoneNumber(prefs.getString('contact') ?? '');
+    if (contactPhones.isEmpty && legacyContact.isNotEmpty) {
+      contactPhones = [legacyContact];
+    }
+    final String name = (prefs.getString('name') ?? '').trim();
+    final String age = (prefs.getString('age') ?? '').trim();
+    final String blood = (prefs.getString('blood') ?? '').trim();
+    final String address = (prefs.getString('address') ?? '').trim();
+    final String conditions = (prefs.getString('conditions') ?? '').trim();
+    final String medications = (prefs.getString('medications') ?? '').trim();
+    final String preferredHospital =
+        (prefs.getString('preferred_hospital') ?? '').trim();
+    final String note = (prefs.getString('note') ?? '').trim();
+    final contacts = <EmergencyContact>[];
 
-    if (contact == null || contact.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Please save an Emergency Contact in your Profile first!",
-          ),
+    for (var index = 0; index < contactPhones.length; index++) {
+      final phone = _cleanPhoneNumber(contactPhones[index]);
+      if (phone.isEmpty) continue;
+      contacts.add(
+        EmergencyContact(
+          name: index < contactNames.length ? contactNames[index].trim() : '',
+          phone: phone,
         ),
+      );
+    }
+
+    if (contacts.isEmpty) {
+      _showMessage(
+        "Please save an emergency contact in your Medical ID first.",
       );
       return;
     }
 
+    if (!mounted) return;
+    final selectedContacts = contacts.length == 1
+        ? [contacts.first]
+        : await showContactPickerSheet(context: context, contacts: contacts);
+    if (selectedContacts == null || selectedContacts.isEmpty) return;
+
     // Get the high-accuracy position
-    Position pos = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+    final pos = await _getCurrentPosition(accuracy: LocationAccuracy.high);
+    final lastKnownLocation = pos == null
+        ? await _locationService.loadLastKnownLocation()
+        : null;
+
+    if (pos == null && lastKnownLocation == null) return;
+
+    final String mapLink = pos != null
+        ? "https://www.google.com/maps/search/?api=1&query=${pos.latitude},${pos.longitude}"
+        : lastKnownLocation!.mapLink;
+    final usingLastKnownLocation = pos == null;
+    final String message = _sosService.buildMessage(
+      mapLink: mapLink,
+      name: name,
+      age: age,
+      blood: blood,
+      address: address,
+      conditions: conditions,
+      medications: medications,
+      preferredHospital: preferredHospital,
+      note: note,
+      locationLabel: usingLastKnownLocation
+          ? 'My last known location'
+          : 'My location',
     );
 
-    // The fixed URL with the $ symbols
-    final String mapLink =
-        "https://www.google.com/maps/search/?api=1&query=${pos.latitude},${pos.longitude}";
-    final String message = "EMERGENCY! I need help. My location: $mapLink";
+    if (!mounted) return;
+    if (usingLastKnownLocation) {
+      _showMessage("Using your last known location for SOS.");
+    }
+    final confirmedMessage = await showSosConfirmationSheet(
+      context: context,
+      contact: selectedContacts
+          .map((contact) => contact.displayName)
+          .join(', '),
+      message: message,
+      onEmergencyCall: () => _launchPhone('112'),
+    );
+
+    if (confirmedMessage == null) return;
 
     // Encode the message to handle spaces and symbols correctly
-    final Uri smsUri = Uri.parse(
-      "sms:$contact?body=${Uri.encodeComponent(message)}",
+    final Uri smsUri = _sosService.smsUri(
+      contact: selectedContacts.map((contact) => contact.phone).join(','),
+      message: confirmedMessage,
     );
 
     if (await canLaunchUrl(smsUri)) {
       await launchUrl(smsUri);
     } else {
-      print("Could not launch SMS. You might be on a computer.");
+      _showMessage("Could not open SMS on this device.");
     }
   }
 
@@ -313,31 +634,69 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showOnboarding) {
+      return OnboardingPage(
+        onFinish: _finishOnboarding,
+        onOpenMedicalId: _openMedicalIdFromOnboarding,
+      );
+    }
+
+    if (!_hasAcceptedMedicalDisclaimer) {
+      return MedicalDisclaimerPage(
+        requiresAcceptance: true,
+        onAccepted: _acceptMedicalDisclaimer,
+      );
+    }
+
     return Scaffold(
       // 1. TOP BAR
       appBar: AppBar(
         title: const Text('MediMap: Find Help'),
         actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Safety and privacy',
+            onSelected: (value) {
+              switch (value) {
+                case 'disclaimer':
+                  _openMedicalDisclaimer();
+                case 'privacy':
+                  _openPrivacyPolicy();
+                case 'reports':
+                  _showReportSubmissionInfo();
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'disclaimer',
+                child: Text('Medical disclaimer'),
+              ),
+              PopupMenuItem(value: 'privacy', child: Text('Privacy policy')),
+              PopupMenuItem(value: 'reports', child: Text('Report storage')),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _determinePosition,
           ),
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfilePage()),
-              );
-            },
-          ),
+          IconButton(icon: const Icon(Icons.person), onPressed: _openMedicalId),
         ],
       ),
 
       // 2. CENTER CONTENT
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : (_selectedIndex == 0 ? _buildMap() : _buildList()),
+          : _hospitalLoadFailed
+          ? _buildHospitalDataError()
+          : Column(
+              children: [
+                if (!_hasEmergencyContact) _buildMedicalIdPrompt(),
+                _buildSearchAndFilters(),
+                Expanded(
+                  child: _selectedIndex == 0 ? _buildMap() : _buildList(),
+                ),
+              ],
+            ),
 
       // 3. FLOATING SOS BUTTON
       // This is likely where the duplicate was. Ensure this block appears ONLY ONCE.
@@ -377,81 +736,204 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  Widget _buildHospitalDataError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 56, color: Colors.red),
+            const SizedBox(height: 12),
+            const Text(
+              'Hospital data could not be loaded.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Check the app installation and try again.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+              onPressed: () async {
+                setState(() => _isLoading = true);
+                await _loadHospitals();
+                await _determinePosition();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openMedicalDisclaimer() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MedicalDisclaimerPage()),
+    );
+  }
+
+  void _openPrivacyPolicy() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PrivacyPolicyPage()),
+    );
+  }
+
+  void _showReportSubmissionInfo() {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Report Storage'),
+          content: Text(_reportService.submissionModeDescription),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSearchAndFilters() {
+    return HospitalSearchFilters(
+      searchController: _searchController,
+      searchQuery: _searchQuery,
+      states: _stateOptions,
+      lgas: _lgaOptions,
+      selectedState: _selectedState,
+      selectedLga: _selectedLga,
+      showFavoritesOnly: _showFavoritesOnly,
+      favoriteCount: _favoriteHospitalIds.length,
+      selectedRadiusKm: _selectedRadiusKm,
+      sortMode: _sortMode,
+      resultCount: _filteredHospitals.length,
+      onSearchChanged: (value) {
+        setState(() {
+          _searchQuery = value;
+        });
+        _onFiltersChanged();
+      },
+      onStateChanged: (value) {
+        setState(() {
+          _selectedState = value;
+          _selectedLga = null;
+        });
+        _onFiltersChanged();
+      },
+      onLgaChanged: (value) {
+        setState(() {
+          _selectedLga = value;
+        });
+        _onFiltersChanged();
+      },
+      onFavoritesChanged: (selected) {
+        setState(() {
+          _showFavoritesOnly = selected;
+        });
+        _onFiltersChanged();
+      },
+      onRadiusChanged: (radiusKm) {
+        setState(() {
+          _selectedRadiusKm = radiusKm;
+        });
+        _onFiltersChanged();
+      },
+      onSortModeChanged: (sortMode) {
+        setState(() {
+          _sortMode = sortMode;
+        });
+        _onFiltersChanged();
+      },
+      onClearSearch: () {
+        _searchController.clear();
+        setState(() {
+          _searchQuery = '';
+        });
+        _onFiltersChanged();
+      },
+      onClearFilters: () {
+        _searchController.clear();
+        setState(() {
+          _searchQuery = '';
+          _selectedState = null;
+          _selectedLga = null;
+          _showFavoritesOnly = false;
+          _selectedRadiusKm = null;
+          _sortMode = 'nearest';
+        });
+        _onFiltersChanged();
+      },
+    );
+  }
+
+  Widget _buildMedicalIdPrompt() {
+    return Material(
+      color: Colors.red.shade50,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        child: Row(
+          children: [
+            const Icon(Icons.medical_information, color: Colors.red),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Add an emergency contact so SOS is ready when needed.',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            TextButton(onPressed: _openMedicalId, child: const Text('Set up')),
+          ],
+        ),
+      ),
+    );
+  }
+
   // View A: The Map
   Widget _buildMap() {
-    return GoogleMap(
-      // Keep this static just for the first 0.5 seconds
-      initialCameraPosition: const CameraPosition(
-        target: LatLng(6.5244, 3.3792), // Default to Lagos
-        zoom: 12,
-      ),
-      markers: _markers,
-
-      // THIS IS KEY: Shows the blue dot on the map
-      myLocationEnabled: true,
-      myLocationButtonEnabled: true,
-
-      onMapCreated: (controller) {
-        _controller = controller;
-        // If we already have the location, move there immediately
+    return HospitalMapView(
+      hospitals: _filteredHospitals,
+      currentLocation: _currentLocation,
+      selectedHospitalId: _selectedHospitalId,
+      hasLocationPermission: _hasLocationPermission,
+      hospitalIcon: _hospitalIcon,
+      hospitalId: _hospitalId,
+      isFavorite: _isFavorite,
+      onHospitalSelected: (hospital) {
+        setState(() => _selectedHospitalId = _hospitalId(hospital));
+        _showHospitalDetails(hospital);
+      },
+      onLocationRefreshRequested: () {
         if (!_isLoading && _allHospitals.isNotEmpty) {
-          _determinePosition(); // Trigger the move
+          _determinePosition();
         }
       },
+      onMessage: _showMessage,
     );
   }
 
   // View B: The Sorted List
   Widget _buildList() {
-    // 1. Wrap everything in RefreshIndicator
-    return RefreshIndicator(
-      onRefresh: _determinePosition, // This calls your GPS function when pulled
-      child: ListView.builder(
-        physics:
-            const AlwaysScrollableScrollPhysics(), // Important: Lets you pull even if the list is short
-        itemCount: _allHospitals.length,
-        itemBuilder: (context, index) {
-          final hospital = _allHospitals[index];
-
-          // Only show hospitals with valid distances
-          if (hospital.distanceInMeters == null) return const SizedBox.shrink();
-
-          // 2. Your Original Card Design is preserved here:
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            child: ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Colors.redAccent,
-                child: Icon(Icons.local_hospital, color: Colors.white),
-              ),
-              title: Text(
-                hospital.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: Text(hospital.ward),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    hospital.distanceText,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const Icon(
-                    Icons.arrow_forward_ios,
-                    size: 12,
-                    color: Colors.grey,
-                  ),
-                ],
-              ),
-              onTap: () => _showHospitalDetails(hospital),
-            ),
-          );
-        },
-      ),
+    return HospitalListView(
+      hospitals: _filteredHospitals,
+      visibleHospitalCount: _visibleHospitalCount,
+      isFavorite: _isFavorite,
+      onHospitalSelected: _showHospitalDetails,
+      onToggleFavorite: _toggleFavorite,
+      onRefreshLocation: _determinePosition,
+      onShowMore: () {
+        setState(() {
+          _visibleHospitalCount += 100;
+        });
+      },
     );
   }
 }
