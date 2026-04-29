@@ -8,11 +8,19 @@ import 'package:firebase_core/firebase_core.dart'; // Fixes 'Firebase'
 import 'package:firebase_crashlytics/firebase_crashlytics.dart'; // Fixes 'Crashlytics'
 import 'firebase_options.dart'; // Fixes 'DefaultFirebaseOptions'
 import 'profile_page.dart';
+import 'repositories/first_aid_repository.dart';
 import 'repositories/hospital_repository.dart';
+import 'services/admin_auth_service.dart';
 import 'services/favorites_service.dart';
+import 'services/hospital_verification_service.dart';
+import 'services/hospital_update_service.dart';
 import 'services/location_service.dart';
 import 'services/report_service.dart';
 import 'services/sos_service.dart';
+import 'widgets/admin_dashboard_page.dart';
+import 'widgets/admin_login_page.dart';
+import 'widgets/emergency_mode_page.dart';
+import 'widgets/first_aid_page.dart';
 import 'widgets/hospital_detail_sheet.dart';
 import 'widgets/hospital_list_view.dart';
 import 'widgets/hospital_map_view.dart';
@@ -56,7 +64,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   // STATE VARIABLES
-  int _selectedIndex = 0; // 0 = Map, 1 = List
+  int _selectedIndex = 0; // 0 = Hospitals, 1 = First Aid, 2 = Optional map
   List<Hospital> _allHospitals = [];
   LatLng? _currentLocation;
   String? _selectedHospitalId;
@@ -66,11 +74,21 @@ class _MainScreenState extends State<MainScreen> {
   bool _showOnboarding = false;
   bool _hasAcceptedMedicalDisclaimer = false;
   bool _hasEmergencyContact = false;
+  bool _isAdminSignedIn = false;
   final AnalyticsService _analytics = AnalyticsService();
+  final AdminAuthService _adminAuthService = AdminAuthService(
+    adminEmails: {'admin@medimap.app', 'chizomw@gmail.com'},
+  );
   final FavoritesService _favoritesService = FavoritesService();
+  final FirstAidRepository _firstAidRepository = FirstAidRepository();
   final HospitalRepository _hospitalRepository = HospitalRepository();
+  final HospitalVerificationService _verificationService =
+      HospitalVerificationService();
+  final HospitalUpdateService _hospitalUpdateService = HospitalUpdateService();
   final LocationService _locationService = LocationService();
-  final ReportService _reportService = ReportService();
+  final ReportService _reportService = ReportService(
+    enableCloudSubmissions: true,
+  );
   final SosService _sosService = SosService();
   BitmapDescriptor? _hospitalIcon;
   final TextEditingController _searchController = TextEditingController();
@@ -79,6 +97,8 @@ class _MainScreenState extends State<MainScreen> {
   String? _selectedState;
   String? _selectedLga;
   bool _showFavoritesOnly = false;
+  bool _usingCloudHospitalUpdates = false;
+  int _cloudHospitalUpdateCount = 0;
   double? _selectedRadiusKm;
   String _sortMode = 'nearest';
   Set<String> _favoriteHospitalIds = {};
@@ -115,6 +135,7 @@ class _MainScreenState extends State<MainScreen> {
   Future<void> _initializeData() async {
     final initWatch = Stopwatch()..start();
     await _loadOnboardingState();
+    _isAdminSignedIn = await _adminAuthService.isCurrentUserAdmin();
 
     // 1. Load the Icon FIRST and wait for it
     await _loadCustomMarker();
@@ -205,14 +226,21 @@ class _MainScreenState extends State<MainScreen> {
   Future<void> _loadHospitals() async {
     try {
       final watch = Stopwatch()..start();
-      final hospitals = await _hospitalRepository.loadHospitals();
+      final localHospitals = await _hospitalRepository.loadHospitals();
+      final cloudUpdates = await _hospitalUpdateService.approvedUpdates();
+      final hospitals = _hospitalRepository.applyUpdates(
+        localHospitals,
+        cloudUpdates,
+      );
       watch.stop();
       debugPrint(
-        'MediMap data: loaded ${hospitals.length} hospitals in ${watch.elapsedMilliseconds}ms',
+        'MediMap data: loaded ${hospitals.length} hospitals with ${cloudUpdates.length} cloud updates in ${watch.elapsedMilliseconds}ms',
       );
       if (!mounted) return;
       setState(() {
         _allHospitals = hospitals;
+        _cloudHospitalUpdateCount = cloudUpdates.length;
+        _usingCloudHospitalUpdates = cloudUpdates.isNotEmpty;
         _hospitalLoadFailed = false;
       });
     } catch (e) {
@@ -393,20 +421,25 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  void _showHospitalDetails(Hospital hospital) {
+  Future<void> _showHospitalDetails(Hospital hospital) async {
     _analytics.logHospitalView(hospital.name, hospital.state);
-    final cleanedPhone = _cleanPhoneNumber(hospital.phone);
+    final cleanedPhone = _cleanPhoneNumber(hospital.displayPhone);
+    final hospitalId = _hospitalId(hospital);
+    final status = await _verificationService.statusFor(hospitalId);
+    if (!mounted) return;
 
     showHospitalDetailSheet(
       context: context,
       hospital: hospital,
       isFavorite: _isFavorite(hospital),
       canCall: cleanedPhone.isNotEmpty,
-      phoneText: cleanedPhone.isEmpty ? 'No phone available' : hospital.phone,
+      phoneText: cleanedPhone.isEmpty
+          ? 'No phone available'
+          : hospital.displayPhone,
       onToggleFavorite: () => _toggleFavorite(hospital),
       onCall: () {
         _analytics.logCall(hospital.name);
-        _launchPhone(hospital.phone);
+        _launchPhone(hospital.displayPhone);
       },
       onDirections: () {
         _analytics.logNavigation(hospital.name);
@@ -416,7 +449,21 @@ class _MainScreenState extends State<MainScreen> {
         Navigator.pop(context);
         _showReportInfoSheet(hospital);
       },
+      verificationStatus: status,
+      onMarkCorrect: () => _markHospitalCorrect(hospital),
+      onMarkIncorrect: () => _markHospitalIncorrect(hospital),
     );
+  }
+
+  Future<void> _markHospitalCorrect(Hospital hospital) async {
+    await _verificationService.markCorrect(_hospitalId(hospital));
+    _showMessage('Thanks. Marked this hospital info as correct.');
+  }
+
+  Future<void> _markHospitalIncorrect(Hospital hospital) async {
+    await _verificationService.markIncorrect(_hospitalId(hospital));
+    _showMessage('Marked as reported by users.');
+    _showReportInfoSheet(hospital);
   }
 
   Future<void> _showReportInfoSheet(Hospital hospital) {
@@ -531,9 +578,11 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  Future<void> _sendSOS() async {
+  Future<void> _sendSOS({bool testMode = false}) async {
     final prefs = await SharedPreferences.getInstance();
     final contactNames = prefs.getStringList('contact_names') ?? [];
+    final contactRelationships =
+        prefs.getStringList('contact_relationships') ?? [];
     var contactPhones = prefs.getStringList('contact_phones') ?? [];
     final legacyContact = _cleanPhoneNumber(prefs.getString('contact') ?? '');
     if (contactPhones.isEmpty && legacyContact.isNotEmpty) {
@@ -557,6 +606,9 @@ class _MainScreenState extends State<MainScreen> {
         EmergencyContact(
           name: index < contactNames.length ? contactNames[index].trim() : '',
           phone: phone,
+          relationship: index < contactRelationships.length
+              ? contactRelationships[index].trim()
+              : '',
         ),
       );
     }
@@ -610,11 +662,16 @@ class _MainScreenState extends State<MainScreen> {
       contact: selectedContacts
           .map((contact) => contact.displayName)
           .join(', '),
-      message: message,
+      message: testMode ? '[TEST SOS - DO NOT SEND]\n\n$message' : message,
       onEmergencyCall: () => _launchPhone('112'),
     );
 
     if (confirmedMessage == null) return;
+
+    if (testMode) {
+      _showMessage('Test SOS complete. No SMS was opened or sent.');
+      return;
+    }
 
     // Encode the message to handle spaces and symbols correctly
     final Uri smsUri = _sosService.smsUri(
@@ -653,6 +710,25 @@ class _MainScreenState extends State<MainScreen> {
       appBar: AppBar(
         title: const Text('MediMap: Find Help'),
         actions: [
+          IconButton(
+            tooltip: 'Emergency mode',
+            icon: const Icon(Icons.emergency, color: Colors.red),
+            onPressed: _openEmergencyMode,
+          ),
+          IconButton(
+            tooltip: 'Test SOS',
+            icon: const Icon(Icons.fact_check_outlined),
+            onPressed: () => _sendSOS(testMode: true),
+          ),
+          IconButton(
+            tooltip: _isAdminSignedIn ? 'Admin dashboard' : 'Admin sign in',
+            icon: Icon(
+              _isAdminSignedIn
+                  ? Icons.admin_panel_settings
+                  : Icons.lock_outline,
+            ),
+            onPressed: _openAdminDashboard,
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.info_outline),
             tooltip: 'Safety and privacy',
@@ -662,6 +738,8 @@ class _MainScreenState extends State<MainScreen> {
                   _openMedicalDisclaimer();
                 case 'privacy':
                   _openPrivacyPolicy();
+                case 'data':
+                  _showHospitalDataStatus();
                 case 'reports':
                   _showReportSubmissionInfo();
               }
@@ -672,6 +750,7 @@ class _MainScreenState extends State<MainScreen> {
                 child: Text('Medical disclaimer'),
               ),
               PopupMenuItem(value: 'privacy', child: Text('Privacy policy')),
+              PopupMenuItem(value: 'data', child: Text('Hospital data status')),
               PopupMenuItem(value: 'reports', child: Text('Report storage')),
             ],
           ),
@@ -691,9 +770,13 @@ class _MainScreenState extends State<MainScreen> {
           : Column(
               children: [
                 if (!_hasEmergencyContact) _buildMedicalIdPrompt(),
-                _buildSearchAndFilters(),
+                if (_selectedIndex != 1) _buildSearchAndFilters(),
                 Expanded(
-                  child: _selectedIndex == 0 ? _buildMap() : _buildList(),
+                  child: switch (_selectedIndex) {
+                    0 => _buildList(),
+                    1 => _buildFirstAid(),
+                    _ => _buildMap(),
+                  },
                 ),
               ],
             ),
@@ -717,18 +800,27 @@ class _MainScreenState extends State<MainScreen> {
           setState(() {
             _selectedIndex = index;
           });
-          _analytics.logViewSwitch(index == 0 ? "Map" : "List");
+          _analytics.logViewSwitch(switch (index) {
+            0 => "Hospitals",
+            1 => "First Aid",
+            _ => "Map",
+          });
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map),
-            label: 'Map View',
+            icon: Icon(Icons.local_hospital_outlined),
+            selectedIcon: Icon(Icons.local_hospital),
+            label: 'Hospitals',
           ),
           NavigationDestination(
-            icon: Icon(Icons.list_outlined),
-            selectedIcon: Icon(Icons.list),
-            label: 'List View',
+            icon: Icon(Icons.health_and_safety_outlined),
+            selectedIcon: Icon(Icons.health_and_safety),
+            label: 'First Aid',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.map_outlined),
+            selectedIcon: Icon(Icons.map),
+            label: 'Map',
           ),
         ],
       ),
@@ -801,6 +893,115 @@ class _MainScreenState extends State<MainScreen> {
         );
       },
     );
+  }
+
+  void _showHospitalDataStatus() {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        final message = _usingCloudHospitalUpdates
+            ? 'Using offline hospital data plus $_cloudHospitalUpdateCount approved Firebase update(s).'
+            : 'Using offline hospital data. No approved Firebase updates were applied.';
+        return AlertDialog(
+          title: const Text('Hospital Data'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _openEmergencyMode() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) {
+          return EmergencyModePage(
+            onCallEmergency: () => _launchPhone('112'),
+            onSendSos: _sendSOS,
+            onOpenFirstAid: () {
+              Navigator.pop(context);
+              setState(() {
+                _selectedIndex = 1;
+              });
+            },
+            onFindNearestHospital: () {
+              Navigator.pop(context);
+              _showNearestHospitalsFromEmergency();
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  void _showNearestHospitalsFromEmergency() {
+    setState(() {
+      _selectedIndex = 0;
+      _sortMode = 'nearest';
+      _showFavoritesOnly = false;
+      _selectedRadiusKm ??= 25;
+    });
+    _onFiltersChanged();
+
+    if (_currentLocation == null) {
+      _determinePosition();
+      _showMessage('Finding your location for nearest hospitals.');
+      return;
+    }
+
+    _showMessage(
+      'Showing nearest hospitals. Tap Directions to open Google Maps.',
+    );
+  }
+
+  Future<void> _openAdminDashboard() async {
+    final isAdmin = await _adminAuthService.isCurrentUserAdmin(
+      forceRefresh: true,
+    );
+    if (!mounted) return;
+    setState(() => _isAdminSignedIn = isAdmin);
+
+    if (!isAdmin) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) {
+            return AdminLoginPage(
+              authService: _adminAuthService,
+              onSignedIn: () {
+                setState(() => _isAdminSignedIn = true);
+                _openAdminDashboard();
+              },
+            );
+          },
+        ),
+      );
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) {
+          return AdminDashboardPage(
+            authService: _adminAuthService,
+            reportService: _reportService,
+            verificationService: _verificationService,
+            updateService: _hospitalUpdateService,
+          );
+        },
+      ),
+    );
+    if (!mounted) return;
+    final stillAdmin = await _adminAuthService.isCurrentUserAdmin();
+    if (!mounted) return;
+    setState(() => _isAdminSignedIn = stillAdmin);
   }
 
   Widget _buildSearchAndFilters() {
@@ -897,7 +1098,7 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // View A: The Map
+  // Optional map preview
   Widget _buildMap() {
     return HospitalMapView(
       hospitals: _filteredHospitals,
@@ -920,18 +1121,40 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // View B: The Sorted List
+  // Main hospital search and directions view
   Widget _buildList() {
     return HospitalListView(
       hospitals: _filteredHospitals,
       visibleHospitalCount: _visibleHospitalCount,
       isFavorite: _isFavorite,
+      canCall: (hospital) =>
+          _cleanPhoneNumber(hospital.displayPhone).isNotEmpty,
       onHospitalSelected: _showHospitalDetails,
       onToggleFavorite: _toggleFavorite,
+      onCall: (hospital) {
+        _analytics.logCall(hospital.name);
+        _launchPhone(hospital.displayPhone);
+      },
+      onDirections: (hospital) {
+        _analytics.logNavigation(hospital.name);
+        _launchMap(hospital);
+      },
       onRefreshLocation: _determinePosition,
       onShowMore: () {
         setState(() {
           _visibleHospitalCount += 100;
+        });
+      },
+    );
+  }
+
+  Widget _buildFirstAid() {
+    return FirstAidPage(
+      repository: _firstAidRepository,
+      onCallEmergency: () => _launchPhone('112'),
+      onFindHospitals: () {
+        setState(() {
+          _selectedIndex = 0;
         });
       },
     );

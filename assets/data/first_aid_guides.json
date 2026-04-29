@@ -1,0 +1,791 @@
+[
+  {
+    "id": "cpr_not_breathing",
+    "title": "CPR / Not Breathing",
+    "category": "Life-threatening",
+    "summary": "What to do if someone is unresponsive and not breathing normally.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Unresponsive or cannot be woken",
+      "Not breathing or only gasping",
+      "Blue or grey lips or face",
+      "Collapse after chest pain or choking"
+    ],
+    "steps": [
+      "Call 112 immediately or ask someone nearby to call.",
+      "Place the person flat on their back on a firm surface.",
+      "Put the heel of one hand in the center of the chest and the other hand on top.",
+      "Push hard and fast in the center of the chest, about 100 to 120 compressions per minute.",
+      "If trained, give rescue breaths after every 30 compressions. If not trained, continue hands-only CPR.",
+      "Continue until help arrives, an AED is ready, or the person starts breathing normally."
+    ],
+    "doNot": [
+      "Do not delay CPR while looking for a pulse if the person is not breathing normally.",
+      "Do not give food, drink, or medication.",
+      "Do not stop compressions unless the person recovers or help takes over."
+    ],
+    "seekCare": "This is an emergency. Call 112 immediately."
+  },
+  {
+    "id": "choking_adult_child",
+    "title": "Choking",
+    "category": "Airway",
+    "summary": "First aid for severe choking in adults and children over 1 year.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Cannot breathe, speak, cry, or cough",
+      "Clutching the throat",
+      "Blue lips or face",
+      "Becoming weak or unconscious"
+    ],
+    "steps": [
+      "If the person can cough, encourage them to keep coughing.",
+      "If they cannot breathe or speak, call 112 or ask someone to call.",
+      "Give up to 5 firm back blows between the shoulder blades.",
+      "If still choking and you are trained, give abdominal thrusts.",
+      "Alternate back blows and abdominal thrusts until the object comes out or help arrives.",
+      "If the person becomes unconscious, begin CPR."
+    ],
+    "doNot": [
+      "Do not put your fingers in the mouth unless you can clearly see and remove the object.",
+      "Do not give water or food.",
+      "Do not slap the back if the person is coughing effectively."
+    ],
+    "seekCare": "Seek medical care after severe choking, even if the object comes out."
+  },
+  {
+    "id": "severe_bleeding",
+    "title": "Severe Bleeding",
+    "category": "Injury",
+    "summary": "Control heavy bleeding while waiting for emergency help.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Blood spurting or flowing heavily",
+      "Bleeding that does not slow with pressure",
+      "Deep wound or exposed tissue",
+      "Pale, cold, weak, confused, or faint"
+    ],
+    "steps": [
+      "Call 112 for heavy or uncontrolled bleeding.",
+      "Apply firm direct pressure with clean cloth, gauze, or clothing.",
+      "Keep pressure steady. Add more cloth if blood soaks through.",
+      "If possible, raise the bleeding area above heart level.",
+      "Help the person lie down and keep them warm.",
+      "If trained and bleeding is life-threatening from an arm or leg, use a tourniquet above the wound."
+    ],
+    "doNot": [
+      "Do not remove cloth already stuck to the wound.",
+      "Do not remove large embedded objects.",
+      "Do not repeatedly lift the dressing to check the wound."
+    ],
+    "seekCare": "Urgent medical care is needed for heavy bleeding, deep wounds, bites, dirty wounds, or bleeding that does not stop."
+  },
+  {
+    "id": "burns",
+    "title": "Burns",
+    "category": "Injury",
+    "summary": "Cool burns quickly and know when urgent care is needed.",
+    "callEmergencyNow": false,
+    "warningSigns": [
+      "Burn on face, airway, hands, genitals, or large area",
+      "Trouble breathing after smoke or chemical exposure",
+      "White, charred, leathery, or numb skin",
+      "Burn caused by electricity or chemicals"
+    ],
+    "steps": [
+      "Move the person away from the heat source.",
+      "Cool the burn under cool running water for at least 20 minutes.",
+      "Remove jewelry or tight clothing near the burn unless stuck to skin.",
+      "Cover with a clean non-stick dressing or clean cloth.",
+      "Keep the person warm and watch for shock.",
+      "Call 112 for serious burns or breathing problems."
+    ],
+    "doNot": [
+      "Do not use ice directly on a burn.",
+      "Do not apply butter, oil, toothpaste, or powders.",
+      "Do not pop blisters.",
+      "Do not pull away clothing stuck to burned skin."
+    ],
+    "seekCare": "Get medical care for deep, large, chemical, electrical, infected, or face/hand/genital burns."
+  },
+  {
+    "id": "stroke",
+    "title": "Stroke Signs",
+    "category": "Medical",
+    "summary": "Use FAST signs and act immediately.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Face drooping on one side",
+      "Arm weakness or numbness",
+      "Slurred speech or confusion",
+      "Sudden severe headache, vision loss, dizziness, or trouble walking"
+    ],
+    "steps": [
+      "Call 112 immediately. Stroke treatment is time-sensitive.",
+      "Note the time symptoms started or when the person was last normal.",
+      "Keep the person resting with head slightly raised.",
+      "Loosen tight clothing and monitor breathing.",
+      "If unconscious but breathing, place them on their side.",
+      "Prepare medical ID, medications, and allergy information."
+    ],
+    "doNot": [
+      "Do not give food, drink, or medication.",
+      "Do not let the person drive.",
+      "Do not wait to see if symptoms improve."
+    ],
+    "seekCare": "Call 112 immediately for any suspected stroke."
+  },
+  {
+    "id": "heart_attack",
+    "title": "Heart Attack Signs",
+    "category": "Medical",
+    "summary": "Recognize warning signs and get emergency care quickly.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Chest pain, pressure, squeezing, or heaviness",
+      "Pain spreading to arm, jaw, back, neck, or stomach",
+      "Shortness of breath, sweating, nausea, or dizziness",
+      "Unusual fatigue or collapse"
+    ],
+    "steps": [
+      "Call 112 immediately.",
+      "Help the person sit and rest.",
+      "Loosen tight clothing and keep them calm.",
+      "If they have prescribed heart medicine, help them take it as directed.",
+      "If they become unresponsive and not breathing normally, start CPR.",
+      "Prepare Medical ID and medication information."
+    ],
+    "doNot": [
+      "Do not let the person walk around or drive.",
+      "Do not ignore mild symptoms.",
+      "Do not give food or drink if they may need emergency treatment."
+    ],
+    "seekCare": "Call 112 immediately for possible heart attack symptoms."
+  },
+  {
+    "id": "seizure",
+    "title": "Seizure",
+    "category": "Medical",
+    "summary": "Protect the person during a seizure and know when to call help.",
+    "callEmergencyNow": false,
+    "warningSigns": [
+      "Seizure lasts longer than 5 minutes",
+      "Repeated seizures without full recovery",
+      "Injury, pregnancy, diabetes, or seizure in water",
+      "First known seizure or trouble breathing after"
+    ],
+    "steps": [
+      "Move nearby objects away to prevent injury.",
+      "Cushion the head with folded clothing.",
+      "Time the seizure.",
+      "After shaking stops, place the person on their side if breathing.",
+      "Stay with them until fully alert.",
+      "Call 112 if warning signs are present."
+    ],
+    "doNot": [
+      "Do not hold the person down.",
+      "Do not put anything in their mouth.",
+      "Do not give food, drink, or medicine until fully awake."
+    ],
+    "seekCare": "Call 112 if the seizure lasts over 5 minutes, repeats, causes injury, or is the first seizure."
+  },
+  {
+    "id": "fainting",
+    "title": "Fainting",
+    "category": "Medical",
+    "summary": "Help someone who faints or feels about to faint.",
+    "callEmergencyNow": false,
+    "warningSigns": [
+      "Chest pain, shortness of breath, or irregular heartbeat",
+      "Fainting during exercise",
+      "Injury from falling",
+      "Pregnancy, diabetes, or repeated fainting",
+      "Does not wake quickly"
+    ],
+    "steps": [
+      "Help the person lie flat on their back.",
+      "Raise their legs slightly if there is no injury.",
+      "Loosen tight clothing and provide fresh air.",
+      "Check breathing and responsiveness.",
+      "When awake, help them sit up slowly.",
+      "Call 112 if warning signs are present."
+    ],
+    "doNot": [
+      "Do not give food or drink until fully awake.",
+      "Do not make them stand up quickly.",
+      "Do not ignore fainting with chest pain or breathing trouble."
+    ],
+    "seekCare": "Seek medical care for unexplained, repeated, or injury-related fainting."
+  },
+  {
+    "id": "fracture_sprain",
+    "title": "Fracture or Sprain",
+    "category": "Injury",
+    "summary": "Immobilize injuries and reduce swelling.",
+    "callEmergencyNow": false,
+    "warningSigns": [
+      "Bone visible or limb looks deformed",
+      "Severe pain, numbness, or loss of pulse",
+      "Head, neck, back, hip, or thigh injury",
+      "Unable to move or bear weight"
+    ],
+    "steps": [
+      "Keep the injured area still.",
+      "Support the limb in the position found.",
+      "Apply a cold pack wrapped in cloth for 15 to 20 minutes.",
+      "Elevate if comfortable and safe.",
+      "Remove rings or tight items before swelling increases.",
+      "Seek medical care for suspected fracture or severe sprain."
+    ],
+    "doNot": [
+      "Do not try to straighten a deformed limb.",
+      "Do not massage the injury.",
+      "Do not apply ice directly to skin."
+    ],
+    "seekCare": "Call 112 for severe deformity, heavy bleeding, numbness, or head/neck/back injury."
+  },
+  {
+    "id": "poisoning",
+    "title": "Poisoning",
+    "category": "Medical",
+    "summary": "Respond to swallowed, inhaled, or skin contact poisons.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Unconscious, confused, or having seizures",
+      "Trouble breathing",
+      "Severe vomiting or burns around mouth",
+      "Exposure to chemicals, drugs, or unknown substances"
+    ],
+    "steps": [
+      "Call 112 immediately for serious symptoms.",
+      "Move the person away from fumes if safe.",
+      "Remove contaminated clothing and rinse skin with water if exposed.",
+      "Keep the substance container or label for responders.",
+      "If the person vomits, turn their head to the side.",
+      "Follow emergency dispatcher instructions."
+    ],
+    "doNot": [
+      "Do not make the person vomit unless told by medical professionals.",
+      "Do not give food, drink, or home remedies.",
+      "Do not enter a dangerous area with fumes."
+    ],
+    "seekCare": "Poisoning can be life-threatening. Call 112 for serious or unknown exposure."
+  },
+  {
+    "id": "allergic_reaction",
+    "title": "Severe Allergic Reaction",
+    "category": "Medical",
+    "summary": "Recognize anaphylaxis and act quickly.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Trouble breathing or wheezing",
+      "Swelling of lips, tongue, throat, or face",
+      "Widespread hives with dizziness or vomiting",
+      "Collapse or confusion after allergen exposure"
+    ],
+    "steps": [
+      "Call 112 immediately.",
+      "Help the person use their prescribed epinephrine auto-injector if available.",
+      "Have them lie down with legs raised unless breathing is easier sitting up.",
+      "Loosen tight clothing.",
+      "If symptoms continue and a second auto-injector is prescribed, follow their plan.",
+      "Begin CPR if they become unresponsive and stop breathing normally."
+    ],
+    "doNot": [
+      "Do not wait to see if severe symptoms improve.",
+      "Do not give food or drink.",
+      "Do not make them stand or walk around."
+    ],
+    "seekCare": "Call 112 for any suspected anaphylaxis, even after epinephrine."
+  },
+  {
+    "id": "heat_stroke",
+    "title": "Heat Stroke",
+    "category": "Environment",
+    "summary": "Cool the person rapidly during dangerous overheating.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Very high body temperature",
+      "Confusion, fainting, seizure, or collapse",
+      "Hot skin, heavy sweating, or no sweating",
+      "Fast pulse or severe weakness"
+    ],
+    "steps": [
+      "Call 112 immediately.",
+      "Move the person to shade or a cool place.",
+      "Remove excess clothing.",
+      "Cool rapidly with water, wet cloths, fan, or ice packs at neck, armpits, and groin.",
+      "If awake and able to swallow, give small sips of cool water.",
+      "Monitor breathing until help arrives."
+    ],
+    "doNot": [
+      "Do not give alcohol or caffeine.",
+      "Do not give fluids if confused, vomiting, or unconscious.",
+      "Do not delay cooling while waiting for help."
+    ],
+    "seekCare": "Heat stroke is an emergency. Call 112."
+  },
+  {
+    "id": "asthma_attack",
+    "title": "Asthma Attack",
+    "category": "Breathing",
+    "summary": "Support breathing and know when it is an emergency.",
+    "callEmergencyNow": false,
+    "warningSigns": [
+      "Severe shortness of breath or cannot speak full sentences",
+      "Blue lips or fingernails",
+      "Rescue inhaler not helping",
+      "Drowsy, confused, or exhausted"
+    ],
+    "steps": [
+      "Help the person sit upright and stay calm.",
+      "Help them use their rescue inhaler as prescribed.",
+      "Loosen tight clothing.",
+      "Move away from smoke, dust, or trigger if possible.",
+      "Call 112 if symptoms are severe or not improving.",
+      "Be ready to start CPR if they become unresponsive and stop breathing normally."
+    ],
+    "doNot": [
+      "Do not make the person lie flat if breathing is difficult.",
+      "Do not leave them alone.",
+      "Do not delay emergency help if inhaler is not working."
+    ],
+    "seekCare": "Call 112 for severe breathing difficulty, blue lips, confusion, or no improvement."
+  },
+  {
+    "id": "diabetic_emergency",
+    "title": "Diabetic Emergency",
+    "category": "Medical",
+    "summary": "Help someone with low blood sugar or diabetic collapse.",
+    "callEmergencyNow": false,
+    "warningSigns": [
+      "Confusion, strange behavior, or drowsiness",
+      "Seizure or unconsciousness",
+      "Very weak, sweaty, shaky, or pale",
+      "Known diabetes with worsening symptoms"
+    ],
+    "steps": [
+      "If awake and able to swallow, give fast sugar such as glucose drink, juice, or regular soft drink.",
+      "Wait 10 to 15 minutes and monitor improvement.",
+      "If they improve, help them eat longer-lasting food if available.",
+      "If unconscious, having a seizure, or unable to swallow, call 112.",
+      "Place an unconscious breathing person on their side.",
+      "Prepare Medical ID, insulin, medication, or glucose meter information."
+    ],
+    "doNot": [
+      "Do not give food or drink to someone unconscious or unable to swallow.",
+      "Do not give insulin unless it is part of their own plan and they can manage it.",
+      "Do not leave them alone."
+    ],
+    "seekCare": "Call 112 if unconscious, seizing, unable to swallow, or not improving."
+  },
+  {
+    "id": "drowning",
+    "title": "Drowning",
+    "category": "Water",
+    "summary": "Get the person out safely and support breathing.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Unresponsive or not breathing normally",
+      "Coughing foam or trouble breathing after water rescue",
+      "Blue lips or cold skin",
+      "Confusion, exhaustion, or repeated vomiting"
+    ],
+    "steps": [
+      "Call 112 immediately.",
+      "Only rescue if it is safe. Use a pole, rope, or flotation aid if possible.",
+      "Once out of water, check breathing.",
+      "If not breathing normally, start CPR.",
+      "If breathing, place on side and keep warm.",
+      "Monitor closely until help arrives."
+    ],
+    "doNot": [
+      "Do not put yourself in danger during rescue.",
+      "Do not assume the person is fine after coughing up water.",
+      "Do not delay CPR if not breathing normally."
+    ],
+    "seekCare": "Anyone with breathing difficulty after drowning needs urgent medical care."
+  },
+  {
+    "id": "electric_shock",
+    "title": "Electric Shock",
+    "category": "Injury",
+    "summary": "Make the scene safe before touching the person.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Unconscious, confused, or seizure",
+      "Burns from electricity",
+      "Chest pain, irregular heartbeat, or breathing trouble",
+      "High-voltage exposure or lightning strike"
+    ],
+    "steps": [
+      "Do not touch the person until the power source is off.",
+      "Call 112 for serious shock or high-voltage exposure.",
+      "Turn off electricity if safe, or move the source with a dry non-conductive object.",
+      "Check breathing and responsiveness.",
+      "Start CPR if unresponsive and not breathing normally.",
+      "Cover burns with a clean dry cloth."
+    ],
+    "doNot": [
+      "Do not touch the person while they are still connected to electricity.",
+      "Do not use wet objects near electricity.",
+      "Do not apply ointments to electrical burns."
+    ],
+    "seekCare": "Electrical injuries need medical review, especially with burns, chest pain, fainting, or high voltage."
+  },
+  {
+    "id": "snake_bite",
+    "title": "Snake Bite",
+    "category": "Bites",
+    "summary": "Keep still and get urgent medical help.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Trouble breathing or swallowing",
+      "Severe swelling or pain",
+      "Bleeding, weakness, dizziness, or collapse",
+      "Bite from unknown or venomous snake"
+    ],
+    "steps": [
+      "Call 112 or go to emergency care immediately.",
+      "Keep the person still and calm.",
+      "Keep the bitten limb below heart level if possible.",
+      "Remove rings, watches, or tight clothing near the bite.",
+      "Mark the edge of swelling and time if safe.",
+      "Describe the snake only if it can be done safely."
+    ],
+    "doNot": [
+      "Do not cut the wound or suck out venom.",
+      "Do not apply ice.",
+      "Do not use a tight tourniquet.",
+      "Do not try to catch the snake."
+    ],
+    "seekCare": "Snake bite requires urgent medical assessment."
+  },
+  {
+    "id": "eye_injury",
+    "title": "Eye Injury",
+    "category": "Injury",
+    "summary": "Protect the eye and rinse chemicals immediately.",
+    "callEmergencyNow": false,
+    "warningSigns": [
+      "Chemical splash in the eye",
+      "Object stuck in the eye",
+      "Vision loss or severe pain",
+      "Blood in the eye or eye cut"
+    ],
+    "steps": [
+      "For chemicals, rinse the eye with clean running water for at least 15 minutes.",
+      "Remove contact lenses if they come out easily while rinsing.",
+      "For an object stuck in the eye, cover both eyes loosely and seek urgent care.",
+      "Keep the person from rubbing the eye.",
+      "Seek medical care for pain, vision change, or injury.",
+      "Call 112 for severe trauma or chemical exposure with serious symptoms."
+    ],
+    "doNot": [
+      "Do not rub the eye.",
+      "Do not remove an embedded object.",
+      "Do not apply pressure to the injured eye.",
+      "Do not use eye drops after chemical exposure unless told by a professional."
+    ],
+    "seekCare": "Urgent care is needed for chemical exposure, embedded objects, severe pain, or vision changes."
+  },
+  {
+    "id": "shock",
+    "title": "Shock",
+    "category": "Life-threatening",
+    "summary": "Support circulation after serious injury, bleeding, burns, allergic reaction, or illness.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Pale, cold, clammy skin",
+      "Fast breathing or weak pulse",
+      "Confusion, weakness, dizziness, or fainting",
+      "Thirst, nausea, or restlessness after injury or illness"
+    ],
+    "steps": [
+      "Call 112 immediately if shock is suspected.",
+      "Help the person lie flat on their back if comfortable.",
+      "Raise legs slightly if there is no head, neck, spine, hip, or leg injury.",
+      "Control any bleeding with direct pressure.",
+      "Keep the person warm with a cloth or blanket.",
+      "Monitor breathing and responsiveness until help arrives."
+    ],
+    "doNot": [
+      "Do not give food or drink.",
+      "Do not move the person if you suspect spine, hip, or leg injury.",
+      "Do not let the person stand or walk around."
+    ],
+    "seekCare": "Shock can be life-threatening. Call 112."
+  },
+  {
+    "id": "head_neck_spinal_injury",
+    "title": "Head, Neck, or Spinal Injury",
+    "category": "Injury",
+    "summary": "Keep the person still and protect the spine after serious falls, crashes, or head trauma.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Fall from height, road crash, diving injury, or heavy blow",
+      "Neck or back pain",
+      "Weakness, numbness, tingling, or paralysis",
+      "Confusion, vomiting, seizure, or loss of consciousness"
+    ],
+    "steps": [
+      "Call 112 immediately for suspected spine injury.",
+      "Tell the person to stay still and avoid moving the head or neck.",
+      "Support the head in the position found if safe to do so.",
+      "Keep airway open without tilting the head unless needed for breathing.",
+      "Control bleeding with gentle pressure around, not directly on, obvious skull injury.",
+      "Monitor breathing until help arrives."
+    ],
+    "doNot": [
+      "Do not move the person unless there is immediate danger.",
+      "Do not twist or straighten the head or neck.",
+      "Do not remove a helmet unless airway access is impossible."
+    ],
+    "seekCare": "Call 112 for suspected head, neck, or spinal injury."
+  },
+  {
+    "id": "concussion",
+    "title": "Concussion",
+    "category": "Injury",
+    "summary": "Watch for brain injury symptoms after a blow to the head.",
+    "callEmergencyNow": false,
+    "warningSigns": [
+      "Loss of consciousness, seizure, or repeated vomiting",
+      "Worsening headache or confusion",
+      "Unequal pupils, weakness, numbness, or slurred speech",
+      "Neck pain or suspected spine injury"
+    ],
+    "steps": [
+      "Stop activity and have the person rest.",
+      "Check for warning signs and call 112 if present.",
+      "Apply a cold pack wrapped in cloth to swelling for short periods.",
+      "Keep the person with a responsible adult for observation.",
+      "Avoid alcohol, driving, sports, or risky activity until medically cleared.",
+      "Seek medical advice for any suspected concussion."
+    ],
+    "doNot": [
+      "Do not let the person return to sport or work immediately.",
+      "Do not give sedatives or alcohol.",
+      "Do not ignore symptoms that worsen over time."
+    ],
+    "seekCare": "Get medical advice for suspected concussion. Call 112 for severe or worsening symptoms."
+  },
+  {
+    "id": "nosebleed",
+    "title": "Nosebleed",
+    "category": "Injury",
+    "summary": "Use forward leaning and steady pressure to control most nosebleeds.",
+    "callEmergencyNow": false,
+    "warningSigns": [
+      "Bleeding after serious head or face injury",
+      "Bleeding that lasts longer than 20 minutes",
+      "Heavy bleeding or trouble breathing",
+      "Person takes blood thinners or has bleeding disorder"
+    ],
+    "steps": [
+      "Have the person sit upright and lean forward.",
+      "Pinch the soft part of the nose just below the bridge.",
+      "Hold steady pressure for 10 to 15 minutes without checking.",
+      "Ask the person to breathe through the mouth.",
+      "Apply a cold cloth to the bridge of the nose if helpful.",
+      "Seek care if bleeding continues or warning signs are present."
+    ],
+    "doNot": [
+      "Do not tilt the head back.",
+      "Do not pack the nose deeply.",
+      "Do not blow or pick the nose after bleeding stops."
+    ],
+    "seekCare": "Seek care for heavy, repeated, injury-related, or prolonged nosebleeds."
+  },
+  {
+    "id": "hypothermia",
+    "title": "Hypothermia",
+    "category": "Environment",
+    "summary": "Warm the person gradually after dangerous cold exposure.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Shivering that stops or becomes weak",
+      "Confusion, sleepiness, or slurred speech",
+      "Slow breathing or weak pulse",
+      "Cold pale skin after cold water or weather exposure"
+    ],
+    "steps": [
+      "Call 112 for moderate or severe hypothermia.",
+      "Move the person to a warm, dry place if safe.",
+      "Remove wet clothing and cover with dry blankets or clothing.",
+      "Warm the center of the body first: chest, neck, head, and groin.",
+      "Give warm sweet drinks only if fully awake and able to swallow.",
+      "Monitor breathing and start CPR if not breathing normally."
+    ],
+    "doNot": [
+      "Do not warm arms and legs first.",
+      "Do not use direct high heat such as hot water or heating pads.",
+      "Do not give alcohol."
+    ],
+    "seekCare": "Call 112 for confusion, severe shivering, drowsiness, or cold-water exposure."
+  },
+  {
+    "id": "dehydration",
+    "title": "Dehydration",
+    "category": "Environment",
+    "summary": "Replace fluids and watch for heat illness or shock.",
+    "callEmergencyNow": false,
+    "warningSigns": [
+      "Confusion, fainting, or extreme weakness",
+      "No urination for many hours",
+      "Very dry mouth, sunken eyes, or fast heartbeat",
+      "Baby or older adult with severe symptoms"
+    ],
+    "steps": [
+      "Move the person to a cool place and let them rest.",
+      "Give small frequent sips of water or oral rehydration solution.",
+      "Loosen tight clothing and cool with wet cloths if overheated.",
+      "For vomiting, give very small sips often.",
+      "Watch for heat stroke signs such as confusion or collapse.",
+      "Seek medical care if symptoms are severe or not improving."
+    ],
+    "doNot": [
+      "Do not give large amounts quickly if vomiting.",
+      "Do not give alcohol.",
+      "Do not give fluids to someone unconscious or unable to swallow."
+    ],
+    "seekCare": "Call 112 for confusion, fainting, severe weakness, or signs of heat stroke."
+  },
+  {
+    "id": "infant_choking",
+    "title": "Infant Choking",
+    "category": "Airway",
+    "summary": "First aid for severe choking in babies under 1 year.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Cannot cry, cough, or breathe",
+      "Weak or silent cough",
+      "Blue lips or face",
+      "Becomes limp or unconscious"
+    ],
+    "steps": [
+      "Call 112 or ask someone nearby to call.",
+      "Support the baby face down along your forearm with the head lower than the chest.",
+      "Give up to 5 firm back blows between the shoulder blades.",
+      "Turn the baby face up while supporting the head.",
+      "Give up to 5 chest thrusts with two fingers on the center of the chest.",
+      "Repeat back blows and chest thrusts until the object comes out or help arrives."
+    ],
+    "doNot": [
+      "Do not use abdominal thrusts on an infant.",
+      "Do not sweep the mouth blindly.",
+      "Do not shake the baby."
+    ],
+    "seekCare": "Call 112 for severe infant choking. Seek medical care after the episode."
+  },
+  {
+    "id": "internal_bleeding",
+    "title": "Internal Bleeding",
+    "category": "Injury",
+    "summary": "Recognize hidden bleeding after trauma or severe illness.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Severe pain, swelling, or bruising after injury",
+      "Coughing or vomiting blood",
+      "Black or bloody stool or urine",
+      "Pale, cold, weak, dizzy, confused, or faint"
+    ],
+    "steps": [
+      "Call 112 immediately if internal bleeding is suspected.",
+      "Help the person lie still and rest.",
+      "Treat for shock by keeping them warm.",
+      "Monitor breathing and responsiveness.",
+      "If vomiting, turn the head to the side if safe.",
+      "Share injury details and medications with responders."
+    ],
+    "doNot": [
+      "Do not give food or drink.",
+      "Do not move the person unnecessarily.",
+      "Do not ignore worsening pain, weakness, or confusion after injury."
+    ],
+    "seekCare": "Internal bleeding is an emergency. Call 112."
+  },
+  {
+    "id": "animal_bite",
+    "title": "Animal Bite",
+    "category": "Bites",
+    "summary": "Clean minor bites and seek care for deep, dirty, or risky wounds.",
+    "callEmergencyNow": false,
+    "warningSigns": [
+      "Severe bleeding or deep wound",
+      "Bite to face, hand, neck, or genitals",
+      "Animal may have rabies or cannot be identified",
+      "Increasing redness, swelling, warmth, pus, or fever"
+    ],
+    "steps": [
+      "Move away from the animal safely.",
+      "For bleeding, apply direct pressure with clean cloth.",
+      "Wash minor bites with running water and soap for several minutes.",
+      "Cover with a clean dressing.",
+      "Seek medical care for deep bites, dirty wounds, or rabies risk.",
+      "Report dangerous or stray animal bites to local authorities where appropriate."
+    ],
+    "doNot": [
+      "Do not ignore bites that break the skin.",
+      "Do not close a deep bite wound yourself.",
+      "Do not approach or try to capture a dangerous animal."
+    ],
+    "seekCare": "Seek care for any bite that breaks skin, deep wounds, infection signs, or possible rabies exposure."
+  },
+  {
+    "id": "insect_sting",
+    "title": "Insect Sting",
+    "category": "Bites",
+    "summary": "Treat local reactions and watch for severe allergy.",
+    "callEmergencyNow": false,
+    "warningSigns": [
+      "Trouble breathing or wheezing",
+      "Swelling of face, lips, tongue, or throat",
+      "Dizziness, fainting, vomiting, or widespread hives",
+      "Multiple stings or sting in mouth/throat"
+    ],
+    "steps": [
+      "Move away from the insect area.",
+      "Remove a visible stinger by scraping sideways with a card or fingernail.",
+      "Wash the area with soap and water.",
+      "Apply a cold pack wrapped in cloth for pain and swelling.",
+      "Watch for severe allergic reaction signs.",
+      "Call 112 and use prescribed epinephrine if severe allergy signs appear."
+    ],
+    "doNot": [
+      "Do not squeeze the venom sac if removing a stinger.",
+      "Do not scratch the sting.",
+      "Do not delay emergency help for breathing or swelling symptoms."
+    ],
+    "seekCare": "Call 112 for severe allergic reaction. Seek care for infection, many stings, or mouth/throat sting."
+  },
+  {
+    "id": "opioid_overdose",
+    "title": "Opioid Overdose",
+    "category": "Life-threatening",
+    "summary": "Use naloxone if available and support breathing while waiting for help.",
+    "callEmergencyNow": true,
+    "warningSigns": [
+      "Unconscious or cannot be woken",
+      "Slow, shallow, or stopped breathing",
+      "Gurgling, choking, or snoring sounds",
+      "Blue or grey lips or fingernails",
+      "Very small pinpoint pupils"
+    ],
+    "steps": [
+      "Call 112 immediately.",
+      "Give naloxone if available and follow the product instructions.",
+      "Try to keep the person awake and breathing.",
+      "Place the person on their side if breathing.",
+      "Start CPR if they are not breathing normally.",
+      "Stay with the person. Give another naloxone dose if instructed and symptoms continue."
+    ],
+    "doNot": [
+      "Do not leave the person alone.",
+      "Do not give food, drink, or stimulants.",
+      "Do not put the person in a bath or shower.",
+      "Do not wait to call emergency services."
+    ],
+    "seekCare": "Opioid overdose is an emergency. Call 112 even if naloxone works."
+  }
+]

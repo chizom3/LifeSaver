@@ -3,11 +3,17 @@ import 'package:flutter/material.dart';
 class EmergencyContact {
   final String name;
   final String phone;
+  final String relationship;
 
-  const EmergencyContact({required this.name, required this.phone});
+  const EmergencyContact({
+    required this.name,
+    required this.phone,
+    this.relationship = '',
+  });
 
   String get displayName {
-    return name.isEmpty ? phone : '$name ($phone)';
+    final label = name.isEmpty ? phone : '$name ($phone)';
+    return relationship.isEmpty ? label : '$relationship - $label';
   }
 }
 

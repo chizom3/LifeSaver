@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -22,8 +24,12 @@ class _ProfilePageState extends State<ProfilePage> {
   final _medicationsCtrl = TextEditingController();
   final _preferredHospitalCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
+  final _criticalWarningCtrl = TextEditingController();
+  final List<TextEditingController> _allergyCtrls = [];
+  final List<TextEditingController> _medicationCtrls = [];
   final List<TextEditingController> _contactNameCtrls = [];
   final List<TextEditingController> _contactPhoneCtrls = [];
+  final List<TextEditingController> _contactRelationshipCtrls = [];
   static const _bloodTypes = [
     '',
     'A+',
@@ -34,6 +40,19 @@ class _ProfilePageState extends State<ProfilePage> {
     'AB-',
     'O+',
     'O-',
+  ];
+  static const _relationships = [
+    '',
+    'Mother',
+    'Father',
+    'Spouse',
+    'Partner',
+    'Sibling',
+    'Child',
+    'Friend',
+    'Doctor',
+    'Caregiver',
+    'Other',
   ];
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -56,10 +75,16 @@ class _ProfilePageState extends State<ProfilePage> {
     _medicationsCtrl.dispose();
     _preferredHospitalCtrl.dispose();
     _noteCtrl.dispose();
+    _criticalWarningCtrl.dispose();
+    _disposeControllers(_allergyCtrls);
+    _disposeControllers(_medicationCtrls);
     for (final controller in _contactNameCtrls) {
       controller.dispose();
     }
     for (final controller in _contactPhoneCtrls) {
+      controller.dispose();
+    }
+    for (final controller in _contactRelationshipCtrls) {
       controller.dispose();
     }
     super.dispose();
@@ -68,11 +93,23 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
     final contactNames = prefs.getStringList('contact_names') ?? [];
+    final contactRelationships =
+        prefs.getStringList('contact_relationships') ?? [];
     var contactPhones = prefs.getStringList('contact_phones') ?? [];
+    var allergies = prefs.getStringList('allergy_items') ?? [];
+    var medications = prefs.getStringList('medication_items') ?? [];
 
     final legacyContact = prefs.getString('contact') ?? '';
     if (contactPhones.isEmpty && legacyContact.trim().isNotEmpty) {
       contactPhones = [legacyContact];
+    }
+    if (allergies.isEmpty) {
+      final note = prefs.getString('note') ?? '';
+      if (note.trim().isNotEmpty) allergies = [note.trim()];
+    }
+    if (medications.isEmpty) {
+      final legacyMedications = prefs.getString('medications') ?? '';
+      medications = _splitItems(legacyMedications);
     }
 
     if (!mounted) return;
@@ -86,6 +123,13 @@ class _ProfilePageState extends State<ProfilePage> {
       _medicationsCtrl.text = prefs.getString('medications') ?? '';
       _preferredHospitalCtrl.text = prefs.getString('preferred_hospital') ?? '';
       _noteCtrl.text = prefs.getString('note') ?? '';
+      _criticalWarningCtrl.text = prefs.getString('critical_warning') ?? '';
+
+      _resetControllers(_allergyCtrls, allergies.isEmpty ? [''] : allergies);
+      _resetControllers(
+        _medicationCtrls,
+        medications.isEmpty ? [''] : medications,
+      );
 
       _clearContactControllers();
       final count = contactPhones.isEmpty ? 1 : contactPhones.length;
@@ -93,9 +137,37 @@ class _ProfilePageState extends State<ProfilePage> {
         _addContactControllers(
           name: index < contactNames.length ? contactNames[index] : '',
           phone: index < contactPhones.length ? contactPhones[index] : '',
+          relationship: index < contactRelationships.length
+              ? contactRelationships[index]
+              : '',
         );
       }
     });
+  }
+
+  List<String> _splitItems(String value) {
+    return value
+        .split(RegExp(r'[,;\n]'))
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  void _disposeControllers(List<TextEditingController> controllers) {
+    for (final controller in controllers) {
+      controller.dispose();
+    }
+    controllers.clear();
+  }
+
+  void _resetControllers(
+    List<TextEditingController> controllers,
+    List<String> values,
+  ) {
+    _disposeControllers(controllers);
+    for (final value in values) {
+      controllers.add(TextEditingController(text: value));
+    }
   }
 
   void _clearContactControllers() {
@@ -105,13 +177,22 @@ class _ProfilePageState extends State<ProfilePage> {
     for (final controller in _contactPhoneCtrls) {
       controller.dispose();
     }
+    for (final controller in _contactRelationshipCtrls) {
+      controller.dispose();
+    }
     _contactNameCtrls.clear();
     _contactPhoneCtrls.clear();
+    _contactRelationshipCtrls.clear();
   }
 
-  void _addContactControllers({String name = '', String phone = ''}) {
+  void _addContactControllers({
+    String name = '',
+    String phone = '',
+    String relationship = '',
+  }) {
     _contactNameCtrls.add(TextEditingController(text: name));
     _contactPhoneCtrls.add(TextEditingController(text: phone));
+    _contactRelationshipCtrls.add(TextEditingController(text: relationship));
   }
 
   String _cleanPhoneNumber(String phone) {
@@ -126,10 +207,14 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _saveData() async {
     final contactNames = <String>[];
     final contactPhones = <String>[];
+    final contactRelationships = <String>[];
+    final allergies = _cleanControllerItems(_allergyCtrls);
+    final medications = _cleanControllerItems(_medicationCtrls);
 
     for (var index = 0; index < _contactPhoneCtrls.length; index++) {
       final phone = _cleanPhoneNumber(_contactPhoneCtrls[index].text);
       final name = _contactNameCtrls[index].text.trim();
+      final relationship = _contactRelationshipCtrls[index].text.trim();
       if (phone.isEmpty && name.isEmpty) continue;
       if (phone.length < 7) {
         _showSnackBar(
@@ -139,6 +224,7 @@ class _ProfilePageState extends State<ProfilePage> {
       }
       contactNames.add(name);
       contactPhones.add(phone);
+      contactRelationships.add(relationship);
     }
 
     if (contactPhones.isEmpty) {
@@ -153,14 +239,18 @@ class _ProfilePageState extends State<ProfilePage> {
     await prefs.setString('blood', _bloodCtrl.text.trim());
     await prefs.setString('address', _addressCtrl.text.trim());
     await prefs.setString('conditions', _conditionsCtrl.text.trim());
-    await prefs.setString('medications', _medicationsCtrl.text.trim());
+    await prefs.setString('medications', medications.join('; '));
     await prefs.setString(
       'preferred_hospital',
       _preferredHospitalCtrl.text.trim(),
     );
     await prefs.setString('note', _noteCtrl.text.trim());
+    await prefs.setString('critical_warning', _criticalWarningCtrl.text.trim());
+    await prefs.setStringList('allergy_items', allergies);
+    await prefs.setStringList('medication_items', medications);
     await prefs.setStringList('contact_names', contactNames);
     await prefs.setStringList('contact_phones', contactPhones);
+    await prefs.setStringList('contact_relationships', contactRelationships);
     await prefs.setString('contact', contactPhones.first);
 
     if (!mounted) return;
@@ -168,6 +258,13 @@ class _ProfilePageState extends State<ProfilePage> {
       _isEditing = false;
     });
     _showSnackBar('Medical ID saved locally.', color: Colors.green);
+  }
+
+  List<String> _cleanControllerItems(List<TextEditingController> controllers) {
+    return controllers
+        .map((controller) => controller.text.trim())
+        .where((value) => value.isNotEmpty)
+        .toList();
   }
 
   void _showSnackBar(String message, {Color? color}) {
@@ -192,6 +289,29 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() {
       _contactNameCtrls.removeAt(index).dispose();
       _contactPhoneCtrls.removeAt(index).dispose();
+      _contactRelationshipCtrls.removeAt(index).dispose();
+    });
+  }
+
+  void _addAllergy() {
+    setState(() {
+      _allergyCtrls.add(TextEditingController());
+    });
+  }
+
+  void _addMedication() {
+    setState(() {
+      _medicationCtrls.add(TextEditingController());
+    });
+  }
+
+  void _removeListItem(List<TextEditingController> controllers, int index) {
+    if (controllers.length == 1) {
+      controllers[index].clear();
+      return;
+    }
+    setState(() {
+      controllers.removeAt(index).dispose();
     });
   }
 
@@ -210,6 +330,11 @@ class _ProfilePageState extends State<ProfilePage> {
             tooltip: 'Copy Medical ID',
             icon: const Icon(Icons.copy),
             onPressed: _copyMedicalId,
+          ),
+          IconButton(
+            tooltip: 'Medical ID QR',
+            icon: const Icon(Icons.qr_code_2),
+            onPressed: _showMedicalIdQr,
           ),
           IconButton(
             tooltip: _isEditing ? 'Save' : 'Edit',
@@ -257,16 +382,28 @@ class _ProfilePageState extends State<ProfilePage> {
               title: 'Medical',
               children: [
                 _buildField(
+                  'Critical Warning',
+                  _criticalWarningCtrl,
+                  Icons.priority_high,
+                  maxLines: 2,
+                ),
+                _buildField(
                   'Known Conditions',
                   _conditionsCtrl,
                   Icons.monitor_heart,
                   maxLines: 2,
                 ),
-                _buildField(
-                  'Current Medications',
-                  _medicationsCtrl,
-                  Icons.medication,
-                  maxLines: 2,
+                _buildStructuredList(
+                  title: 'Allergies',
+                  controllers: _allergyCtrls,
+                  icon: Icons.warning_amber,
+                  onAdd: _addAllergy,
+                ),
+                _buildStructuredList(
+                  title: 'Current Medications',
+                  controllers: _medicationCtrls,
+                  icon: Icons.medication,
+                  onAdd: _addMedication,
                 ),
                 _buildField(
                   'Preferred Hospital',
@@ -274,7 +411,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   Icons.local_hospital,
                 ),
                 _buildField(
-                  'Allergies / Notes',
+                  'Additional Notes',
                   _noteCtrl,
                   Icons.note,
                   maxLines: 2,
@@ -336,6 +473,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 if (_isEditing)
                   IconButton(
+                    tooltip: 'Pick from phone contacts',
+                    icon: const Icon(Icons.contacts),
+                    onPressed: _pickPhoneContact,
+                  ),
+                if (_isEditing)
+                  IconButton(
                     tooltip: 'Add contact',
                     icon: const Icon(Icons.add),
                     onPressed: _addContact,
@@ -351,6 +494,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   Expanded(
                     child: Column(
                       children: [
+                        _buildRelationshipField(index),
                         _buildField(
                           'Contact Name',
                           _contactNameCtrls[index],
@@ -398,6 +542,99 @@ class _ProfilePageState extends State<ProfilePage> {
         border: _isEditing ? const OutlineInputBorder() : InputBorder.none,
       ),
       style: const TextStyle(fontWeight: FontWeight.bold),
+    );
+  }
+
+  Widget _buildRelationshipField(int index) {
+    if (!_isEditing) {
+      return _buildField(
+        'Relationship',
+        _contactRelationshipCtrls[index],
+        Icons.family_restroom,
+      );
+    }
+
+    final value =
+        _relationships.contains(_contactRelationshipCtrls[index].text.trim())
+        ? _contactRelationshipCtrls[index].text.trim()
+        : 'Other';
+
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      decoration: const InputDecoration(
+        labelText: 'Relationship',
+        prefixIcon: Icon(Icons.family_restroom, color: Colors.red),
+        border: OutlineInputBorder(),
+      ),
+      items: _relationships.map((relationship) {
+        return DropdownMenuItem(
+          value: relationship,
+          child: Text(
+            relationship.isEmpty ? 'Select relationship' : relationship,
+          ),
+        );
+      }).toList(),
+      onChanged: (value) {
+        _contactRelationshipCtrls[index].text = value ?? '';
+      },
+    );
+  }
+
+  Widget _buildStructuredList({
+    required String title,
+    required List<TextEditingController> controllers,
+    required IconData icon,
+    required VoidCallback onAdd,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: Colors.red),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            if (_isEditing)
+              IconButton(
+                tooltip: 'Add $title',
+                icon: const Icon(Icons.add),
+                onPressed: onAdd,
+              ),
+          ],
+        ),
+        for (var index = 0; index < controllers.length; index++)
+          Padding(
+            padding: EdgeInsets.only(top: index == 0 ? 0 : 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controllers[index],
+                    enabled: _isEditing,
+                    decoration: InputDecoration(
+                      labelText: '$title ${index + 1}',
+                      border: _isEditing
+                          ? const OutlineInputBorder()
+                          : InputBorder.none,
+                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                if (_isEditing)
+                  IconButton(
+                    tooltip: 'Remove',
+                    icon: const Icon(Icons.remove_circle_outline),
+                    onPressed: () => _removeListItem(controllers, index),
+                  ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -480,17 +717,67 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  Future<void> _pickPhoneContact() async {
+    try {
+      final permission = await FlutterContacts.permissions.request(
+        PermissionType.read,
+      );
+      if (permission != PermissionStatus.granted &&
+          permission != PermissionStatus.limited) {
+        _showSnackBar('Contacts permission was not granted.');
+        return;
+      }
+
+      final contactId = await FlutterContacts.native.showPicker();
+      if (contactId == null) return;
+
+      final fullContact = await FlutterContacts.get(
+        contactId,
+        properties: {ContactProperty.name, ContactProperty.phone},
+      );
+      final phone = fullContact?.phones.isNotEmpty == true
+          ? fullContact!.phones.first.number
+          : '';
+      if (phone.trim().isEmpty) {
+        _showSnackBar('Selected contact has no phone number.');
+        return;
+      }
+
+      setState(() {
+        final emptyIndex = _contactPhoneCtrls.indexWhere((controller) {
+          return controller.text.trim().isEmpty;
+        });
+        final index = emptyIndex == -1 ? _contactPhoneCtrls.length : emptyIndex;
+        if (emptyIndex == -1) {
+          _addContactControllers();
+        }
+        _contactNameCtrls[index].text = fullContact?.displayName ?? '';
+        _contactPhoneCtrls[index].text = phone;
+      });
+    } on PlatformException {
+      _showSnackBar(
+        'Phone contact picker is available on Android/iOS devices.',
+      );
+    }
+  }
+
   String _medicalIdText() {
     final contacts = <String>[];
     for (var index = 0; index < _contactPhoneCtrls.length; index++) {
       final name = _contactNameCtrls[index].text.trim();
       final phone = _contactPhoneCtrls[index].text.trim();
+      final relationship = _contactRelationshipCtrls[index].text.trim();
       if (name.isEmpty && phone.isEmpty) continue;
-      contacts.add(name.isEmpty ? phone : '$name: $phone');
+      final label = name.isEmpty ? phone : '$name: $phone';
+      contacts.add(relationship.isEmpty ? label : '$relationship - $label');
     }
+    final allergies = _cleanControllerItems(_allergyCtrls);
+    final medications = _cleanControllerItems(_medicationCtrls);
 
     return [
       'MEDICAL ID',
+      if (_criticalWarningCtrl.text.trim().isNotEmpty)
+        'CRITICAL WARNING: ${_criticalWarningCtrl.text.trim()}',
       if (_nameCtrl.text.trim().isNotEmpty) 'Name: ${_nameCtrl.text.trim()}',
       if (_ageCtrl.text.trim().isNotEmpty) 'Age: ${_ageCtrl.text.trim()}',
       if (_bloodCtrl.text.trim().isNotEmpty)
@@ -499,8 +786,9 @@ class _ProfilePageState extends State<ProfilePage> {
         'Address: ${_addressCtrl.text.trim()}',
       if (_conditionsCtrl.text.trim().isNotEmpty)
         'Known conditions: ${_conditionsCtrl.text.trim()}',
-      if (_medicationsCtrl.text.trim().isNotEmpty)
-        'Current medications: ${_medicationsCtrl.text.trim()}',
+      if (allergies.isNotEmpty) 'Allergies: ${allergies.join('; ')}',
+      if (medications.isNotEmpty)
+        'Current medications: ${medications.join('; ')}',
       if (_preferredHospitalCtrl.text.trim().isNotEmpty)
         'Preferred hospital: ${_preferredHospitalCtrl.text.trim()}',
       if (_noteCtrl.text.trim().isNotEmpty) 'Notes: ${_noteCtrl.text.trim()}',
@@ -511,6 +799,42 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _copyMedicalId() async {
     await Clipboard.setData(ClipboardData(text: _medicalIdText()));
     _showSnackBar('Medical ID copied.');
+  }
+
+  void _showMedicalIdQr() {
+    final data = _medicalIdText();
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Medical ID QR'),
+          content: SizedBox(
+            width: 280,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                QrImageView(
+                  data: data,
+                  size: 240,
+                  backgroundColor: Colors.white,
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Responder can scan this to view your Medical ID details.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showEmergencyView() {
@@ -533,6 +857,26 @@ class _ProfilePageState extends State<ProfilePage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                if (_criticalWarningCtrl.text.trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      border: Border.all(color: Colors.red),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'CRITICAL WARNING: ${_criticalWarningCtrl.text.trim()}',
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 SelectableText(
                   _medicalIdText(),

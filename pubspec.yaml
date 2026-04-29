@@ -43,6 +43,10 @@ dependencies:
   cloud_firestore: ^6.0.3
   image_picker: ^1.2.1
   shared_preferences: ^2.5.4
+  flutter_tts: ^4.2.5
+  flutter_contacts: ^2.0.2
+  qr_flutter: ^4.1.0
+  firebase_auth: ^6.4.0
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +66,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/data/hospitals.json
+    - assets/data/first_aid_guides.json
     - assets/images/cross.png
     - assets/images/medimap_logo.png
 

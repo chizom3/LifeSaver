@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../hospital.dart';
+import '../services/hospital_verification_service.dart';
 
 Future<void> showHospitalDetailSheet({
   required BuildContext context,
@@ -12,6 +13,9 @@ Future<void> showHospitalDetailSheet({
   required VoidCallback onCall,
   required VoidCallback onDirections,
   required VoidCallback onReportInfo,
+  required HospitalVerificationStatus verificationStatus,
+  required VoidCallback onMarkCorrect,
+  required VoidCallback onMarkIncorrect,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -88,6 +92,8 @@ Future<void> showHospitalDetailSheet({
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
+              const SizedBox(height: 8),
+              _VerificationBadge(status: verificationStatus),
               const SizedBox(height: 12),
               _DetailRow(
                 icon: Icons.near_me,
@@ -98,6 +104,31 @@ Future<void> showHospitalDetailSheet({
                 icon: Icons.location_on,
                 label: 'Ward',
                 value: hospital.ward,
+              ),
+              _DetailRow(
+                icon: Icons.business,
+                label: 'Type',
+                value: hospital.facilityTypeText,
+              ),
+              _DetailRow(
+                icon: Icons.schedule,
+                label: 'Status',
+                value: hospital.operationStatusText,
+              ),
+              _DetailRow(
+                icon: Icons.verified_user_outlined,
+                label: 'License',
+                value: hospital.licenseStatus,
+              ),
+              _DetailRow(
+                icon: Icons.assignment_turned_in_outlined,
+                label: 'Registration',
+                value: hospital.registrationStatus,
+              ),
+              _DetailRow(
+                icon: Icons.place_outlined,
+                label: 'Address',
+                value: hospital.physicalLocation,
               ),
               _DetailRow(icon: Icons.map, label: 'LGA', value: hospital.lga),
               _DetailRow(
@@ -143,6 +174,32 @@ Future<void> showHospitalDetailSheet({
                 ],
               ),
               const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.verified_outlined),
+                      label: const Text('Info correct'),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        onMarkCorrect();
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.flag_outlined),
+                      label: const Text('Info wrong'),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        onMarkIncorrect();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -157,6 +214,46 @@ Future<void> showHospitalDetailSheet({
       );
     },
   );
+}
+
+class _VerificationBadge extends StatelessWidget {
+  final HospitalVerificationStatus status;
+
+  const _VerificationBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final isReported = status.incorrectCount > status.correctCount;
+    final color = isReported ? Colors.orange : Colors.green;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.shade100),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isReported ? Icons.report_problem_outlined : Icons.verified,
+            color: color.shade800,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${status.label}  •  Correct ${status.correctCount}  •  Reports ${status.incorrectCount}',
+              style: TextStyle(
+                color: color.shade900,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _DetailRow extends StatelessWidget {

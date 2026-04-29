@@ -16,13 +16,7 @@ class FavoritesService {
   }
 
   String hospitalId(Hospital hospital) {
-    return [
-      hospital.name.trim().toLowerCase(),
-      hospital.state.trim().toLowerCase(),
-      hospital.lga.trim().toLowerCase(),
-      hospital.latitude.toStringAsFixed(5),
-      hospital.longitude.toStringAsFixed(5),
-    ].join('|');
+    return hospital.hospitalKey;
   }
 
   bool isFavorite(Hospital hospital, Set<String> favoriteIds) {

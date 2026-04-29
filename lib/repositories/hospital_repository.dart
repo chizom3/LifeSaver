@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../hospital.dart';
+import '../services/hospital_update_service.dart';
 
 class HospitalFilterCriteria {
   final String query;
@@ -44,6 +45,46 @@ class HospitalRepository {
     return hospitals;
   }
 
+  List<Hospital> applyUpdates(
+    List<Hospital> hospitals,
+    List<HospitalUpdate> updates,
+  ) {
+    if (updates.isEmpty) {
+      buildIndexes(hospitals);
+      return hospitals;
+    }
+
+    final byKey = <String, Hospital>{
+      for (final hospital in hospitals) hospital.hospitalKey: hospital,
+    };
+    final closedKeys = <String>{};
+
+    for (final update in updates.where((update) => update.approved)) {
+      switch (update.action) {
+        case HospitalUpdateAction.add:
+          byKey[update.hospitalKey] = update.toHospital();
+          closedKeys.remove(update.hospitalKey);
+        case HospitalUpdateAction.update:
+          final existing = byKey[update.hospitalKey];
+          if (existing != null) {
+            byKey[update.hospitalKey] = update.applyTo(existing);
+          } else {
+            byKey[update.hospitalKey] = update.toHospital();
+          }
+          closedKeys.remove(update.hospitalKey);
+        case HospitalUpdateAction.close:
+          closedKeys.add(update.hospitalKey);
+      }
+    }
+
+    final merged = byKey.entries
+        .where((entry) => !closedKeys.contains(entry.key))
+        .map((entry) => entry.value)
+        .toList();
+    buildIndexes(merged);
+    return merged;
+  }
+
   void buildIndexes(List<Hospital> hospitals) {
     _spatialIndex.clear();
     _searchIndex.clear();
@@ -54,6 +95,12 @@ class HospitalRepository {
         hospital.state,
         hospital.lga,
         hospital.ward,
+        hospital.physicalLocation,
+        hospital.facilityLevel,
+        hospital.ownership,
+        hospital.operationStatus,
+        hospital.licenseStatus,
+        hospital.registrationStatus,
       ].join(' ').toLowerCase();
 
       if (hospital.latitude == 0.0 && hospital.longitude == 0.0) continue;
@@ -129,7 +176,7 @@ class HospitalRepository {
       final matchesQuery =
           query.isEmpty ||
           (_searchIndex[hospital] ??
-                  '${hospital.name} ${hospital.state} ${hospital.lga} ${hospital.ward}'
+                  '${hospital.name} ${hospital.state} ${hospital.lga} ${hospital.ward} ${hospital.facilityLevel} ${hospital.ownership}'
                       .toLowerCase())
               .contains(query);
 
@@ -156,13 +203,7 @@ class HospitalRepository {
   }
 
   String hospitalId(Hospital hospital) {
-    return [
-      hospital.name.trim().toLowerCase(),
-      hospital.state.trim().toLowerCase(),
-      hospital.lga.trim().toLowerCase(),
-      hospital.latitude.toStringAsFixed(5),
-      hospital.longitude.toStringAsFixed(5),
-    ].join('|');
+    return hospital.hospitalKey;
   }
 
   Iterable<Hospital> _candidateHospitals(
