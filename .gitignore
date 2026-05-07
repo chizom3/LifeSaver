@@ -108,6 +108,9 @@ unlinked_spec.ds
 # Coverage
 coverage/
 
+# Local web secrets
+web/maps_config.js
+
 # Symbols
 app.*.symbols
 

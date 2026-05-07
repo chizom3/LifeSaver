@@ -48,7 +48,7 @@ Application restriction:
 Created key:
 
 - Display name: `MediMap Web Maps key`
-- Resource: `projects/1019209914571/locations/global/keys/39f21d3d-80b5-4d45-b472-aa0985f68767`
+- Resource: `projects/1019209914571/locations/global/keys/cca25910-f7f6-415b-9c8a-e79e0f913b17`
 
 Allowed referrers:
 
@@ -61,3 +61,5 @@ API restrictions:
 - Maps JavaScript API
 
 The Web key is loaded in `web/index.html`.
+
+Do not commit the Web key. Put the restricted Web key in an ignored `web/maps_config.js` file using `web/maps_config.example.js` as the template.
