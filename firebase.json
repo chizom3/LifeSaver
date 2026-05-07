@@ -7,7 +7,7 @@
       "android": {
         "default": {
           "projectId": "life-saver-17939",
-          "appId": "1:1019209914571:android:e1a88e2e16ad22c9ad634e",
+          "appId": "1:1019209914571:android:5e7746d90e6aafeaad634e",
           "fileOutput": "android/app/google-services.json"
         }
       },
@@ -15,9 +15,9 @@
         "lib/firebase_options.dart": {
           "projectId": "life-saver-17939",
           "configurations": {
-            "android": "1:1019209914571:android:e1a88e2e16ad22c9ad634e",
-            "ios": "1:1019209914571:ios:5ecc6e420f13e292ad634e",
-            "macos": "1:1019209914571:ios:5ecc6e420f13e292ad634e",
+            "android": "1:1019209914571:android:5e7746d90e6aafeaad634e",
+            "ios": "1:1019209914571:ios:108d81a5b60d905aad634e",
+            "macos": "1:1019209914571:ios:108d81a5b60d905aad634e",
             "web": "1:1019209914571:web:3854119ffb43e2bfad634e",
             "windows": "1:1019209914571:web:62e9a32b8eb7df9ead634e"
           }

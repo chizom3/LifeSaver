@@ -1,4 +1,4 @@
-package com.example.medimap
+package com.rydertechnologies.medimap
 
 import io.flutter.embedding.android.FlutterActivity
 

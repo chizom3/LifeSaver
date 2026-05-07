@@ -76,9 +76,7 @@ class _MainScreenState extends State<MainScreen> {
   bool _hasEmergencyContact = false;
   bool _isAdminSignedIn = false;
   final AnalyticsService _analytics = AnalyticsService();
-  final AdminAuthService _adminAuthService = AdminAuthService(
-    adminEmails: {'admin@medimap.app', 'chizomw@gmail.com'},
-  );
+  final AdminAuthService _adminAuthService = AdminAuthService();
   final FavoritesService _favoritesService = FavoritesService();
   final FirstAidRepository _firstAidRepository = FirstAidRepository();
   final HospitalRepository _hospitalRepository = HospitalRepository();

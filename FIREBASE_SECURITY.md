@@ -21,17 +21,15 @@ Admins can:
 
 ## Admin Access
 
-The rules accept either:
+The rules accept:
 
 - a Firebase Auth custom claim: `admin: true`
-- an allowlisted admin email in `firestore.rules`
 
-The app also accepts either:
+The app also accepts:
 
 - a Firebase Auth custom claim: `admin: true`
-- an allowlisted admin email in `lib/main.dart`
 
-Before production, keep only real admin emails in both files, or set a proper custom claim from a trusted server/Admin SDK.
+Set admin claims only from a trusted server or the Firebase Admin SDK. Do not grant production admin access from client-side email allowlists.
 
 ## Deploy Rules
 

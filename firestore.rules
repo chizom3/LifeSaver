@@ -7,13 +7,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return signedIn() && (
-        request.auth.token.admin == true ||
-        request.auth.token.email in [
-          'admin@medimap.app',
-          'chizomw@gmail.com'
-        ]
-      );
+      return signedIn() && request.auth.token.admin == true;
     }
 
     function isApprovedHospitalUpdate() {

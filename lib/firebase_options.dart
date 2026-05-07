@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDDKSbQECgsyvqJ-H5AEqJyrVRMT8ZqHmQ',
-    appId: '1:1019209914571:android:e1a88e2e16ad22c9ad634e',
+    appId: '1:1019209914571:android:5e7746d90e6aafeaad634e',
     messagingSenderId: '1019209914571',
     projectId: 'life-saver-17939',
     storageBucket: 'life-saver-17939.firebasestorage.app',
@@ -60,24 +60,24 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAtfrkuy5OS5XUbUE34ITl8iLTWIqioSy0',
-    appId: '1:1019209914571:ios:5ecc6e420f13e292ad634e',
+    appId: '1:1019209914571:ios:108d81a5b60d905aad634e',
     messagingSenderId: '1019209914571',
     projectId: 'life-saver-17939',
     storageBucket: 'life-saver-17939.firebasestorage.app',
     androidClientId: '1019209914571-kigsc7hgovbnfli6lq3ce8vrvkoqqgvk.apps.googleusercontent.com',
-    iosClientId: '1019209914571-90f03a5pnogi1ipj7n3gi44sifodigqm.apps.googleusercontent.com',
-    iosBundleId: 'com.example.medimap',
+    iosClientId: '1019209914571-ep7dmffuvgjspu24o3cilv3eh35s60hm.apps.googleusercontent.com',
+    iosBundleId: 'com.rydertechnologies.medimap',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyAtfrkuy5OS5XUbUE34ITl8iLTWIqioSy0',
-    appId: '1:1019209914571:ios:5ecc6e420f13e292ad634e',
+    appId: '1:1019209914571:ios:108d81a5b60d905aad634e',
     messagingSenderId: '1019209914571',
     projectId: 'life-saver-17939',
     storageBucket: 'life-saver-17939.firebasestorage.app',
     androidClientId: '1019209914571-kigsc7hgovbnfli6lq3ce8vrvkoqqgvk.apps.googleusercontent.com',
-    iosClientId: '1019209914571-90f03a5pnogi1ipj7n3gi44sifodigqm.apps.googleusercontent.com',
-    iosBundleId: 'com.example.medimap',
+    iosClientId: '1019209914571-ep7dmffuvgjspu24o3cilv3eh35s60hm.apps.googleusercontent.com',
+    iosBundleId: 'com.rydertechnologies.medimap',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
