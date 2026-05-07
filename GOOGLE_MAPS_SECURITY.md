@@ -52,8 +52,8 @@ Created key:
 
 Allowed referrers:
 
-- Your production domain, for example `https://example.com/*`
-- Firebase Hosting domains if used, for example `https://life-saver-17939.web.app/*` and `https://life-saver-17939.firebaseapp.com/*`
+- Production domain: `https://medimap.ryderenergy.com.ng/*`
+- Firebase Hosting domains if used: `https://life-saver-17939.web.app/*` and `https://life-saver-17939.firebaseapp.com/*`
 - Local development domains only while needed, for example `http://localhost:*/*`
 
 API restrictions:

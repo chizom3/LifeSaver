@@ -47,6 +47,6 @@ flutter test
 ## Important setup
 
 - Android requires a `MAPS_API_KEY` Gradle property or environment variable for Google Maps.
-- Use separate Google Maps API keys for Android and Web. Restrict the Android key to package `com.rydertechnologies.medimap` plus the release/upload certificate SHA-1, and restrict the Web key to the production domain referrers.
+- Use separate Google Maps API keys for Android and Web. Restrict the Android key to package `com.rydertechnologies.medimap` plus the release/upload certificate SHA-1, and restrict the Web key to `https://medimap.ryderenergy.com.ng/*`.
 - Android permissions currently cover internet access, fine/coarse location, image picking, and package visibility for phone, map, email, and SMS intents.
 - Emergency contacts and Medical ID data are stored locally with `shared_preferences`.
