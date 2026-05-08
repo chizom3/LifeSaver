@@ -50,3 +50,11 @@ flutter test
 - Use separate Google Maps API keys for Android and Web. Restrict the Android key to package `com.rydertechnologies.medimap` plus the release/upload certificate SHA-1, and restrict the Web key to `https://medimap.ryderenergy.com.ng/*`.
 - Android permissions currently cover internet access, fine/coarse location, image picking, and package visibility for phone, map, email, and SMS intents.
 - Emergency contacts and Medical ID data are stored locally with `shared_preferences`.
+
+## Documentation
+
+- [Deployment Guide](docs/DEPLOYMENT.md): release builds, APK/web output paths, hosting, and domain notes.
+- [Application Documentation](docs/APPLICATION.md): product purpose, user flows, modules, data model, and operations.
+- [Configuration Guide](docs/CONFIGURATION.md): Firebase, Google Maps keys, admin access, and local web Maps config.
+- [UI Guide](docs/UI.md): current responsive layouts for hospitals, map, filters, First Aid, and Medical ID.
+- [Troubleshooting](docs/TROUBLESHOOTING.md): common build, web cache, service worker, Firebase, and Maps errors.

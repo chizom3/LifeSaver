@@ -58,7 +58,7 @@ class HospitalListView extends StatelessWidget {
       onRefresh: () async => onRefreshLocation(),
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(10, 8, 10, 96),
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 144),
         itemCount:
             visibleHospitals.length +
             (canShowMore ? 1 : 0) +

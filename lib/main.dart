@@ -75,6 +75,7 @@ class _MainScreenState extends State<MainScreen> {
   bool _hasAcceptedMedicalDisclaimer = false;
   bool _hasEmergencyContact = false;
   bool _isAdminSignedIn = false;
+  bool _showSearchFilters = false;
   final AnalyticsService _analytics = AnalyticsService();
   final AdminAuthService _adminAuthService = AdminAuthService();
   final FavoritesService _favoritesService = FavoritesService();
@@ -706,32 +707,25 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       // 1. TOP BAR
       appBar: AppBar(
-        title: const Text('MediMap: Find Help'),
+        title: const Text('MediMap'),
         actions: [
           IconButton(
             tooltip: 'Emergency mode',
             icon: const Icon(Icons.emergency, color: Colors.red),
             onPressed: _openEmergencyMode,
           ),
-          IconButton(
-            tooltip: 'Test SOS',
-            icon: const Icon(Icons.fact_check_outlined),
-            onPressed: () => _sendSOS(testMode: true),
-          ),
-          IconButton(
-            tooltip: _isAdminSignedIn ? 'Admin dashboard' : 'Admin sign in',
-            icon: Icon(
-              _isAdminSignedIn
-                  ? Icons.admin_panel_settings
-                  : Icons.lock_outline,
-            ),
-            onPressed: _openAdminDashboard,
-          ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.info_outline),
-            tooltip: 'Safety and privacy',
+            tooltip: 'More options',
             onSelected: (value) {
               switch (value) {
+                case 'medical_id':
+                  _openMedicalId();
+                case 'refresh':
+                  _determinePosition();
+                case 'test_sos':
+                  _sendSOS(testMode: true);
+                case 'admin':
+                  _openAdminDashboard();
                 case 'disclaimer':
                   _openMedicalDisclaimer();
                 case 'privacy':
@@ -742,21 +736,71 @@ class _MainScreenState extends State<MainScreen> {
                   _showReportSubmissionInfo();
               }
             },
-            itemBuilder: (context) => const [
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'medical_id',
+                child: ListTile(
+                  leading: Icon(Icons.person),
+                  title: Text('Medical ID'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'refresh',
+                child: ListTile(
+                  leading: Icon(Icons.refresh),
+                  title: Text('Refresh location'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'test_sos',
+                child: ListTile(
+                  leading: Icon(Icons.fact_check_outlined),
+                  title: Text('Test SOS'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'admin',
+                child: ListTile(
+                  leading: Icon(
+                    _isAdminSignedIn
+                        ? Icons.admin_panel_settings
+                        : Icons.lock_outline,
+                  ),
+                  title: Text(
+                    _isAdminSignedIn ? 'Admin dashboard' : 'Admin sign in',
+                  ),
+                ),
+              ),
               PopupMenuItem(
                 value: 'disclaimer',
-                child: Text('Medical disclaimer'),
+                child: ListTile(
+                  leading: Icon(Icons.info_outline),
+                  title: Text('Medical disclaimer'),
+                ),
               ),
-              PopupMenuItem(value: 'privacy', child: Text('Privacy policy')),
-              PopupMenuItem(value: 'data', child: Text('Hospital data status')),
-              PopupMenuItem(value: 'reports', child: Text('Report storage')),
+              const PopupMenuItem(
+                value: 'privacy',
+                child: ListTile(
+                  leading: Icon(Icons.privacy_tip_outlined),
+                  title: Text('Privacy policy'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'data',
+                child: ListTile(
+                  leading: Icon(Icons.storage_outlined),
+                  title: Text('Hospital data status'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'reports',
+                child: ListTile(
+                  leading: Icon(Icons.assignment_outlined),
+                  title: Text('Report storage'),
+                ),
+              ),
             ],
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _determinePosition,
-          ),
-          IconButton(icon: const Icon(Icons.person), onPressed: _openMedicalId),
         ],
       ),
 
@@ -768,27 +812,17 @@ class _MainScreenState extends State<MainScreen> {
           : Column(
               children: [
                 if (!_hasEmergencyContact) _buildMedicalIdPrompt(),
-                if (_selectedIndex != 1) _buildSearchAndFilters(),
-                Expanded(
-                  child: switch (_selectedIndex) {
-                    0 => _buildList(),
-                    1 => _buildFirstAid(),
-                    _ => _buildMap(),
-                  },
-                ),
+                Expanded(child: _buildMainContent()),
               ],
             ),
 
       // 3. FLOATING SOS BUTTON
       // This is likely where the duplicate was. Ensure this block appears ONLY ONCE.
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: _sendSOS,
         backgroundColor: Colors.red,
-        icon: const Icon(Icons.sos, color: Colors.white),
-        label: const Text(
-          "SOS Alert",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        tooltip: 'SOS Alert',
+        child: const Icon(Icons.sos, color: Colors.white),
       ),
 
       // 4. BOTTOM NAVIGATION
@@ -822,7 +856,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -1002,7 +1036,7 @@ class _MainScreenState extends State<MainScreen> {
     setState(() => _isAdminSignedIn = stillAdmin);
   }
 
-  Widget _buildSearchAndFilters() {
+  Widget _buildSearchAndFilters({VoidCallback? onSheetChanged}) {
     return HospitalSearchFilters(
       searchController: _searchController,
       searchQuery: _searchQuery,
@@ -1020,6 +1054,7 @@ class _MainScreenState extends State<MainScreen> {
           _searchQuery = value;
         });
         _onFiltersChanged();
+        onSheetChanged?.call();
       },
       onStateChanged: (value) {
         setState(() {
@@ -1027,30 +1062,35 @@ class _MainScreenState extends State<MainScreen> {
           _selectedLga = null;
         });
         _onFiltersChanged();
+        onSheetChanged?.call();
       },
       onLgaChanged: (value) {
         setState(() {
           _selectedLga = value;
         });
         _onFiltersChanged();
+        onSheetChanged?.call();
       },
       onFavoritesChanged: (selected) {
         setState(() {
           _showFavoritesOnly = selected;
         });
         _onFiltersChanged();
+        onSheetChanged?.call();
       },
       onRadiusChanged: (radiusKm) {
         setState(() {
           _selectedRadiusKm = radiusKm;
         });
         _onFiltersChanged();
+        onSheetChanged?.call();
       },
       onSortModeChanged: (sortMode) {
         setState(() {
           _sortMode = sortMode;
         });
         _onFiltersChanged();
+        onSheetChanged?.call();
       },
       onClearSearch: () {
         _searchController.clear();
@@ -1058,6 +1098,7 @@ class _MainScreenState extends State<MainScreen> {
           _searchQuery = '';
         });
         _onFiltersChanged();
+        onSheetChanged?.call();
       },
       onClearFilters: () {
         _searchController.clear();
@@ -1070,6 +1111,156 @@ class _MainScreenState extends State<MainScreen> {
           _sortMode = 'nearest';
         });
         _onFiltersChanged();
+        onSheetChanged?.call();
+      },
+    );
+  }
+
+  Widget _buildMainContent() {
+    if (_selectedIndex == 1) {
+      return _buildFirstAid();
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final useColumns = constraints.maxWidth >= 900;
+        final content = _selectedIndex == 0 ? _buildList() : _buildMap();
+
+        if (useColumns) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                width: _showSearchFilters ? 360 : 0,
+                child: _showSearchFilters
+                    ? SingleChildScrollView(child: _buildSearchAndFilters())
+                    : const SizedBox.shrink(),
+              ),
+              if (_showSearchFilters) const VerticalDivider(width: 1),
+              Expanded(
+                child: Column(
+                  children: [
+                    _buildResultsToolbar(useColumns: true),
+                    Expanded(child: content),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            _buildResultsToolbar(useColumns: false),
+            Expanded(child: content),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildResultsToolbar({required bool useColumns}) {
+    final filtersAreOpen = useColumns && _showSearchFilters;
+
+    return Material(
+      elevation: 1,
+      color: Theme.of(context).colorScheme.surface,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+        child: Row(
+          children: [
+            FilledButton.tonalIcon(
+              icon: Icon(
+                filtersAreOpen
+                    ? Icons.filter_alt_off
+                    : Icons.manage_search,
+              ),
+              label: Text(filtersAreOpen ? 'Hide filters' : 'Search'),
+              onPressed: () {
+                if (useColumns) {
+                  setState(() => _showSearchFilters = !_showSearchFilters);
+                  return;
+                }
+                _openSearchFiltersSheet();
+              },
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _filteredHospitals.length == 1
+                    ? '1 facility'
+                    : '${_filteredHospitals.length} facilities',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Text(
+              _sortMode == 'az' ? 'A-Z' : 'Nearest',
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openSearchFiltersSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.72,
+              minChildSize: 0.42,
+              maxChildSize: 0.92,
+              builder: (context, scrollController) {
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 8, 6),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Search and filters',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            tooltip: 'Close',
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView(
+                        controller: scrollController,
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.viewInsetsOf(context).bottom + 16,
+                        ),
+                        children: [
+                          _buildSearchAndFilters(
+                            onSheetChanged: () => setSheetState(() {}),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
       },
     );
   }

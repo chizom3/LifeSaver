@@ -88,7 +88,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Create and approve admin users in Firebase Authentication first. Normal users do not need to sign in.',
+              'Admin users must have the Firebase admin custom claim. Normal users do not need to sign in.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey),
             ),

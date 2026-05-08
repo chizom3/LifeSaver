@@ -50,7 +50,7 @@ class HospitalSearchFilters extends StatelessWidget {
       elevation: 1,
       color: Theme.of(context).colorScheme.surface,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
         child: Column(
           children: [
             TextField(
@@ -68,10 +68,14 @@ class HospitalSearchFilters extends StatelessWidget {
                       ),
                 border: const OutlineInputBorder(),
                 isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
               ),
               onChanged: onSearchChanged,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Expanded(
@@ -82,6 +86,10 @@ class HospitalSearchFilters extends StatelessWidget {
                       labelText: 'State',
                       border: OutlineInputBorder(),
                       isDense: true,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                     ),
                     items: states.map((state) {
                       return DropdownMenuItem(
@@ -101,6 +109,10 @@ class HospitalSearchFilters extends StatelessWidget {
                       labelText: 'LGA',
                       border: OutlineInputBorder(),
                       isDense: true,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                     ),
                     items: lgas.map((lga) {
                       return DropdownMenuItem(
@@ -114,65 +126,79 @@ class HospitalSearchFilters extends StatelessWidget {
                 IconButton(
                   tooltip: 'Clear filters',
                   icon: const Icon(Icons.filter_alt_off),
+                  visualDensity: VisualDensity.compact,
                   onPressed: onClearFilters,
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               children: [
                 FilterChip(
                   avatar: Icon(
                     showFavoritesOnly ? Icons.star : Icons.star_border,
-                    size: 18,
+                    size: 16,
                   ),
                   label: Text('Saved ($favoriteCount)'),
                   selected: showFavoritesOnly,
+                  visualDensity: VisualDensity.compact,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 2),
                   onSelected: onFavoritesChanged,
                 ),
+                const Spacer(),
+                SegmentedButton<String>(
+                  style: const ButtonStyle(
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  segments: const [
+                    ButtonSegment(
+                      value: 'nearest',
+                      icon: Icon(Icons.near_me, size: 16),
+                      label: Text('Nearest'),
+                    ),
+                    ButtonSegment(
+                      value: 'az',
+                      icon: Icon(Icons.sort_by_alpha, size: 16),
+                      label: Text('A-Z'),
+                    ),
+                  ],
+                  selected: {sortMode},
+                  onSelectionChanged: (selection) {
+                    onSortModeChanged(selection.first);
+                  },
+                ),
               ],
             ),
-            const SizedBox(height: 8),
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(
-                  value: 'nearest',
-                  icon: Icon(Icons.near_me),
-                  label: Text('Nearest'),
-                ),
-                ButtonSegment(
-                  value: 'az',
-                  icon: Icon(Icons.sort_by_alpha),
-                  label: Text('A-Z'),
-                ),
-              ],
-              selected: {sortMode},
-              onSelectionChanged: (selection) {
-                onSortModeChanged(selection.first);
-              },
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Align(
               alignment: Alignment.centerLeft,
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  ChoiceChip(
-                    label: const Text('Any distance'),
-                    selected: selectedRadiusKm == null,
-                    onSelected: (_) => onRadiusChanged(null),
-                  ),
-                  for (final radius in const [5.0, 10.0, 25.0, 50.0])
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
                     ChoiceChip(
-                      label: Text('${radius.toStringAsFixed(0)} km'),
-                      selected: selectedRadiusKm == radius,
-                      onSelected: (_) => onRadiusChanged(radius),
+                      label: const Text('Any'),
+                      selected: selectedRadiusKm == null,
+                      visualDensity: VisualDensity.compact,
+                      labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+                      onSelected: (_) => onRadiusChanged(null),
                     ),
-                ],
+                    for (final radius in const [5.0, 10.0, 25.0, 50.0]) ...[
+                      const SizedBox(width: 6),
+                      ChoiceChip(
+                        label: Text('${radius.toStringAsFixed(0)} km'),
+                        selected: selectedRadiusKm == radius,
+                        visualDensity: VisualDensity.compact,
+                        labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+                        onSelected: (_) => onRadiusChanged(radius),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               children: [
                 const Icon(Icons.local_hospital, size: 18, color: Colors.grey),

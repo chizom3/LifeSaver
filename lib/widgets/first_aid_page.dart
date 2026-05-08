@@ -52,6 +52,7 @@ class _FirstAidPageState extends State<FirstAidPage> {
 
         final allGuides = snapshot.data ?? const [];
         final guides = widget.repository.filterGuides(allGuides, _query);
+        final groupedGuides = _groupGuides(guides);
 
         return Column(
           children: [
@@ -69,22 +70,35 @@ class _FirstAidPageState extends State<FirstAidPage> {
             Expanded(
               child: guides.isEmpty
                   ? const _EmptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
-                      itemCount: guides.length,
-                      itemBuilder: (context, index) {
-                        final guide = guides[index];
-                        return _GuideCard(
-                          guide: guide,
-                          onTap: () => _openGuide(guide),
-                        );
-                      },
+                  : ListView(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 144),
+                      children: [
+                        for (final group in groupedGuides)
+                          _GuideGroupCard(
+                            group: group,
+                            initiallyExpanded:
+                                _query.trim().isNotEmpty ||
+                                groupedGuides.length == 1,
+                            onOpenGuide: _openGuide,
+                          ),
+                      ],
                     ),
             ),
           ],
         );
       },
     );
+  }
+
+  List<_GuideGroup> _groupGuides(List<FirstAidGuide> guides) {
+    final grouped = <String, List<FirstAidGuide>>{};
+    for (final guide in guides) {
+      grouped.putIfAbsent(guide.category, () => []).add(guide);
+    }
+
+    return grouped.entries.map((entry) {
+      return _GuideGroup(category: entry.key, guides: entry.value);
+    }).toList();
   }
 
   void _reload() {
@@ -169,6 +183,56 @@ class _Header extends StatelessWidget {
   }
 }
 
+class _GuideGroup {
+  final String category;
+  final List<FirstAidGuide> guides;
+
+  const _GuideGroup({required this.category, required this.guides});
+}
+
+class _GuideGroupCard extends StatelessWidget {
+  final _GuideGroup group;
+  final bool initiallyExpanded;
+  final ValueChanged<FirstAidGuide> onOpenGuide;
+
+  const _GuideGroupCard({
+    required this.group,
+    required this.initiallyExpanded,
+    required this.onOpenGuide,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
+        leading: CircleAvatar(
+          backgroundColor: Colors.teal.shade50,
+          child: Icon(
+            _iconForCategory(group.category),
+            color: Colors.teal.shade800,
+          ),
+        ),
+        title: Text(group.category),
+        subtitle: Text(
+          group.guides.length == 1
+              ? '1 topic'
+              : '${group.guides.length} topics',
+        ),
+        children: [
+          for (var index = 0; index < group.guides.length; index++) ...[
+            if (index > 0) const Divider(height: 1),
+            _GuideCard(
+              guide: group.guides[index],
+              onTap: () => onOpenGuide(group.guides[index]),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _GuideCard extends StatelessWidget {
   final FirstAidGuide guide;
   final VoidCallback onTap;
@@ -190,7 +254,7 @@ class _GuideCard extends StatelessWidget {
         ),
         title: Text(guide.title, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
-          '${guide.category} - ${guide.summary}',
+          guide.summary,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -201,24 +265,24 @@ class _GuideCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  IconData _iconForCategory(String category) {
-    switch (category.toLowerCase()) {
-      case 'airway':
-      case 'breathing':
-        return Icons.air;
-      case 'injury':
-      case 'bites':
-        return Icons.healing;
-      case 'environment':
-      case 'water':
-        return Icons.thermostat;
-      case 'life-threatening':
-        return Icons.emergency;
-      case 'medical':
-      default:
-        return Icons.medical_information;
-    }
+IconData _iconForCategory(String category) {
+  switch (category.toLowerCase()) {
+    case 'airway':
+    case 'breathing':
+      return Icons.air;
+    case 'injury':
+    case 'bites':
+      return Icons.healing;
+    case 'environment':
+    case 'water':
+      return Icons.thermostat;
+    case 'life-threatening':
+      return Icons.emergency;
+    case 'medical':
+    default:
+      return Icons.medical_information;
   }
 }
 

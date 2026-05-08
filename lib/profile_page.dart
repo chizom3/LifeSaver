@@ -321,20 +321,41 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         title: const Text('Medical ID'),
         actions: [
-          IconButton(
-            tooltip: 'Emergency view',
-            icon: const Icon(Icons.visibility),
-            onPressed: _showEmergencyView,
-          ),
-          IconButton(
-            tooltip: 'Copy Medical ID',
-            icon: const Icon(Icons.copy),
-            onPressed: _copyMedicalId,
-          ),
-          IconButton(
-            tooltip: 'Medical ID QR',
-            icon: const Icon(Icons.qr_code_2),
-            onPressed: _showMedicalIdQr,
+          PopupMenuButton<String>(
+            tooltip: 'Medical ID actions',
+            onSelected: (value) {
+              switch (value) {
+                case 'emergency_view':
+                  _showEmergencyView();
+                case 'copy':
+                  _copyMedicalId();
+                case 'qr':
+                  _showMedicalIdQr();
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'emergency_view',
+                child: ListTile(
+                  leading: Icon(Icons.visibility),
+                  title: Text('Emergency view'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'copy',
+                child: ListTile(
+                  leading: Icon(Icons.copy),
+                  title: Text('Copy Medical ID'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'qr',
+                child: ListTile(
+                  leading: Icon(Icons.qr_code_2),
+                  title: Text('Medical ID QR'),
+                ),
+              ),
+            ],
           ),
           IconButton(
             tooltip: _isEditing ? 'Save' : 'Edit',
@@ -350,7 +371,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
         child: Column(
           children: [
             CircleAvatar(
@@ -364,6 +385,8 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 20),
             _buildSection(
               title: 'Personal',
+              icon: Icons.person,
+              initiallyExpanded: true,
               children: [
                 _buildField('Full Name', _nameCtrl, Icons.person),
                 _buildPhotoField(),
@@ -380,6 +403,7 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 12),
             _buildSection(
               title: 'Medical',
+              icon: Icons.medical_information,
               children: [
                 _buildField(
                   'Critical Warning',
@@ -434,92 +458,99 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildSection({
     required String title,
+    required IconData icon,
     required List<Widget> children,
+    bool initiallyExpanded = false,
   }) {
     return Card(
       elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            for (var index = 0; index < children.length; index++) ...[
-              if (index > 0) const Divider(),
-              children[index],
-            ],
+      child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
+        leading: Icon(icon, color: Colors.red),
+        title: Text(title, style: Theme.of(context).textTheme.titleMedium),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          for (var index = 0; index < children.length; index++) ...[
+            if (index > 0) const Divider(),
+            children[index],
           ],
-        ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildContactActions() {
+    if (!_isEditing) return const SizedBox.shrink();
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextButton.icon(
+          icon: const Icon(Icons.contacts),
+          label: const Text('Pick'),
+          onPressed: _pickPhoneContact,
+        ),
+        const SizedBox(width: 8),
+        FilledButton.icon(
+          icon: const Icon(Icons.add),
+          label: const Text('Add'),
+          onPressed: _addContact,
+        ),
+      ],
     );
   }
 
   Widget _buildContactsSection() {
     return Card(
       elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: ExpansionTile(
+        leading: const Icon(Icons.contact_phone, color: Colors.red),
+        title: Text(
+          'Emergency Contacts',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          if (_isEditing) ...[
+            Align(
+              alignment: Alignment.centerRight,
+              child: _buildContactActions(),
+            ),
+            const SizedBox(height: 8),
+          ],
+          for (var index = 0; index < _contactPhoneCtrls.length; index++) ...[
+            if (index > 0) const Divider(),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Text(
-                    'Emergency Contacts',
-                    style: Theme.of(context).textTheme.titleMedium,
+                  child: Column(
+                    children: [
+                      _buildRelationshipField(index),
+                      _buildField(
+                        'Contact Name',
+                        _contactNameCtrls[index],
+                        Icons.badge,
+                      ),
+                      _buildField(
+                        'Phone Number',
+                        _contactPhoneCtrls[index],
+                        Icons.contact_phone,
+                        keyboardType: TextInputType.phone,
+                      ),
+                    ],
                   ),
                 ),
                 if (_isEditing)
                   IconButton(
-                    tooltip: 'Pick from phone contacts',
-                    icon: const Icon(Icons.contacts),
-                    onPressed: _pickPhoneContact,
-                  ),
-                if (_isEditing)
-                  IconButton(
-                    tooltip: 'Add contact',
-                    icon: const Icon(Icons.add),
-                    onPressed: _addContact,
+                    tooltip: 'Remove contact',
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () => _removeContact(index),
                   ),
               ],
             ),
-            const SizedBox(height: 8),
-            for (var index = 0; index < _contactPhoneCtrls.length; index++) ...[
-              if (index > 0) const Divider(),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        _buildRelationshipField(index),
-                        _buildField(
-                          'Contact Name',
-                          _contactNameCtrls[index],
-                          Icons.badge,
-                        ),
-                        _buildField(
-                          'Phone Number',
-                          _contactPhoneCtrls[index],
-                          Icons.contact_phone,
-                          keyboardType: TextInputType.phone,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (_isEditing)
-                    IconButton(
-                      tooltip: 'Remove contact',
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () => _removeContact(index),
-                    ),
-                ],
-              ),
-            ],
           ],
-        ),
+        ],
       ),
     );
   }
@@ -533,7 +564,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }) {
     return TextField(
       controller: controller,
-      enabled: _isEditing,
+      readOnly: !_isEditing,
       maxLines: maxLines,
       keyboardType: keyboardType,
       decoration: InputDecoration(
@@ -615,7 +646,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Expanded(
                   child: TextField(
                     controller: controllers[index],
-                    enabled: _isEditing,
+                    readOnly: !_isEditing,
                     decoration: InputDecoration(
                       labelText: '$title ${index + 1}',
                       border: _isEditing
@@ -667,28 +698,36 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildPhotoField() {
+    if (!_isEditing) {
+      final hasPhoto = _photoUrlCtrl.text.trim().isNotEmpty;
+      return ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: const Icon(Icons.photo_camera, color: Colors.red),
+        title: const Text('Profile Photo'),
+        subtitle: Text(hasPhoto ? 'Saved on this device' : 'Not set'),
+      );
+    }
+
     return Column(
       children: [
         TextField(
           controller: _photoUrlCtrl,
-          enabled: _isEditing,
           keyboardType: TextInputType.url,
-          decoration: InputDecoration(
-            labelText: 'Photo URL or local path',
-            prefixIcon: const Icon(Icons.photo_camera, color: Colors.red),
-            border: _isEditing ? const OutlineInputBorder() : InputBorder.none,
+          decoration: const InputDecoration(
+            labelText: 'Photo URL',
+            prefixIcon: Icon(Icons.photo_camera, color: Colors.red),
+            border: OutlineInputBorder(),
           ),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        if (_isEditing)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              icon: const Icon(Icons.photo_library),
-              label: const Text('Choose photo'),
-              onPressed: _pickProfilePhoto,
-            ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            icon: const Icon(Icons.photo_library),
+            label: const Text('Choose photo'),
+            onPressed: _pickProfilePhoto,
           ),
+        ),
       ],
     );
   }
