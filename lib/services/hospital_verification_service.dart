@@ -39,10 +39,10 @@ class HospitalVerificationStatus {
 
   String get label {
     if (incorrectCount > correctCount) {
-      return 'Reported by users';
+      return 'You reported a problem';
     }
     if (correctCount > 0) {
-      return 'Marked correct by users';
+      return 'You marked this correct';
     }
     return 'Not verified yet';
   }

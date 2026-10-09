@@ -767,15 +767,13 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
 
-      final contactId = await FlutterContacts.native.showPicker();
-      if (contactId == null) return;
-
-      final fullContact = await FlutterContacts.get(
-        contactId,
+      final fullContact = await FlutterContacts.native.showPicker(
         properties: {ContactProperty.name, ContactProperty.phone},
       );
-      final phone = fullContact?.phones.isNotEmpty == true
-          ? fullContact!.phones.first.number
+      if (fullContact == null) return;
+
+      final phone = fullContact.phones.isNotEmpty
+          ? fullContact.phones.first.number
           : '';
       if (phone.trim().isEmpty) {
         _showSnackBar('Selected contact has no phone number.');
@@ -790,7 +788,7 @@ class _ProfilePageState extends State<ProfilePage> {
         if (emptyIndex == -1) {
           _addContactControllers();
         }
-        _contactNameCtrls[index].text = fullContact?.displayName ?? '';
+        _contactNameCtrls[index].text = fullContact.displayName ?? '';
         _contactPhoneCtrls[index].text = phone;
       });
     } on PlatformException {

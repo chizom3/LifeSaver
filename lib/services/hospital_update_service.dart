@@ -145,7 +145,10 @@ class HospitalUpdateService {
           .where((update) {
             return update.hospitalKey.trim().isNotEmpty;
           })
-          .toList();
+          .toList()
+        // Each edit is a new document; apply oldest first so the latest wins.
+        // Sorted here rather than in the query to avoid a composite index.
+        ..sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
     } catch (_) {
       return const [];
     }

@@ -19,8 +19,42 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Anonymous reports are allowed, but only in the shape the app sends.
+    function isShortString(value, maxLength) {
+      return value is string && value.size() <= maxLength;
+    }
+
+    function isValidFacilityReport() {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'reportId', 'isCloudReport', 'reason', 'details', 'hospitalKey',
+          'hospitalName', 'state', 'lga', 'ward', 'phone',
+          'latitude', 'longitude', 'createdAt'
+        ])
+        && data.keys().hasAll(['reason', 'hospitalKey', 'hospitalName'])
+        && data.reason in [
+          'Wrong phone number',
+          'Wrong location',
+          'Facility is closed',
+          'Duplicate facility',
+          'Other correction'
+        ]
+        && isShortString(data.get('details', ''), 1000)
+        && isShortString(data.hospitalKey, 500)
+        && isShortString(data.hospitalName, 300)
+        && isShortString(data.get('reportId', ''), 100)
+        && data.get('isCloudReport', false) is bool
+        && isShortString(data.get('state', ''), 100)
+        && isShortString(data.get('lga', ''), 100)
+        && isShortString(data.get('ward', ''), 100)
+        && isShortString(data.get('phone', ''), 50)
+        && data.get('latitude', 0) is number
+        && data.get('longitude', 0) is number
+        && isShortString(data.get('createdAt', ''), 40);
+    }
+
     match /facility_reports/{reportId} {
-      allow create: if true;
+      allow create: if isValidFacilityReport();
       allow read, update, delete: if isAdmin();
     }
 

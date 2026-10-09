@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../hospital.dart';
@@ -37,10 +38,8 @@ class HospitalRepository {
 
   Future<List<Hospital>> loadHospitals() async {
     final response = await rootBundle.loadString('assets/data/hospitals.json');
-    final data = json.decode(response) as List<dynamic>;
-    final hospitals = data.map((json) {
-      return Hospital.fromJson(json as Map<String, dynamic>);
-    }).toList();
+    // The dataset is large; parse it off the UI thread to avoid jank.
+    final hospitals = await compute(parseHospitals, response);
     buildIndexes(hospitals);
     return hospitals;
   }
@@ -194,6 +193,7 @@ class HospitalRepository {
 
       final distanceA = distanceFor(a);
       final distanceB = distanceFor(b);
+      if (distanceA == null && distanceB == null) return 0;
       if (distanceA == null) return 1;
       if (distanceB == null) return -1;
       return distanceA.compareTo(distanceB);
@@ -277,4 +277,11 @@ class HospitalRepository {
   double _degreesToRadians(double degrees) {
     return degrees * math.pi / 180;
   }
+}
+
+List<Hospital> parseHospitals(String response) {
+  final data = json.decode(response) as List<dynamic>;
+  return data.map((json) {
+    return Hospital.fromJson(json as Map<String, dynamic>);
+  }).toList();
 }

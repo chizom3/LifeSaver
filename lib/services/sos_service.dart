@@ -29,10 +29,20 @@ class SosService {
   }
 
   Uri smsUri({required String contact, required String message}) {
+    // Use `query` with percent-encoding: `queryParameters` encodes spaces
+    // as '+', which many SMS apps show literally.
     return Uri(
       scheme: 'sms',
       path: contact,
-      queryParameters: {'body': message},
+      query: encodeQueryParameters({'body': message}),
     );
   }
+}
+
+String encodeQueryParameters(Map<String, String> params) {
+  return params.entries
+      .map((entry) {
+        return '${Uri.encodeComponent(entry.key)}=${Uri.encodeComponent(entry.value)}';
+      })
+      .join('&');
 }

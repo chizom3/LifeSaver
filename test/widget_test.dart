@@ -407,11 +407,56 @@ void main() {
     var status = await service.markCorrect('hospital-1');
     expect(status.correctCount, 1);
     expect(status.incorrectCount, 0);
-    expect(status.label, 'Marked correct by users');
+    expect(status.label, 'You marked this correct');
 
     status = await service.markIncorrect('hospital-1');
     expect(status.correctCount, 0);
     expect(status.incorrectCount, 1);
-    expect(status.label, 'Reported by users');
+    expect(status.label, 'You reported a problem');
+  });
+
+  test('SosService encodes SMS body spaces as %20, not +', () {
+    final uri = SosService().smsUri(
+      contact: '+2348000000000,08011111111',
+      message: 'EMERGENCY! I need help.\nBlood type: O+',
+    );
+    final text = uri.toString();
+
+    expect(text, contains('EMERGENCY!%20I%20need%20help.'));
+    expect(text, isNot(contains('EMERGENCY!+I')));
+    expect(text, contains('O%2B'));
+  });
+
+  test('applyUpdates lets the newest update win when sorted by time', () {
+    final repository = HospitalRepository();
+    final base = Hospital(
+      name: 'Old Name',
+      state: 'Lagos',
+      lga: 'Ikeja',
+      ward: '',
+      latitude: 6.6,
+      longitude: 3.3,
+      phone: '',
+    );
+    final updates = [
+      HospitalUpdate(
+        hospitalKey: base.hospitalKey,
+        action: HospitalUpdateAction.close,
+        approved: true,
+        updatedAt: DateTime(2026, 1, 2),
+        fields: const {},
+      ),
+      HospitalUpdate(
+        hospitalKey: base.hospitalKey,
+        action: HospitalUpdateAction.update,
+        approved: true,
+        updatedAt: DateTime(2026, 1, 1),
+        fields: const {'data-facility_name': 'New Name'},
+      ),
+    ]..sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
+
+    final merged = repository.applyUpdates([base], updates);
+
+    expect(merged, isEmpty);
   });
 }

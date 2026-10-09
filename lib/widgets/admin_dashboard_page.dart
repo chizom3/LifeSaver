@@ -317,6 +317,10 @@ class _ReportCard extends StatelessWidget {
             Text('${report.lga}, ${report.state}'),
             const SizedBox(height: 8),
             Text('Reason: ${report.reason}'),
+            if (report.details.trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text('Details: ${report.details.trim()}'),
+            ],
             const SizedBox(height: 6),
             SelectableText('Key: ${report.hospitalKey}'),
             const SizedBox(height: 6),

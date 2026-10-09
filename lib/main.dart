@@ -1,12 +1,13 @@
+import 'package:flutter/foundation.dart' show PlatformDispatcher, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'hospital.dart';
 import 'analytics_service.dart';
-import 'package:firebase_core/firebase_core.dart'; // Fixes 'Firebase'
-import 'package:firebase_crashlytics/firebase_crashlytics.dart'; // Fixes 'Crashlytics'
-import 'firebase_options.dart'; // Fixes 'DefaultFirebaseOptions'
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'firebase_options.dart';
 import 'profile_page.dart';
 import 'repositories/first_aid_repository.dart';
 import 'repositories/hospital_repository.dart';
@@ -35,8 +36,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // ADD THIS: Pass all errors to Crashlytics automatically
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  // Crashlytics has no web implementation.
+  if (!kIsWeb) {
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+  }
 
   runApp(const MyApp());
 }
@@ -241,6 +248,7 @@ class _MainScreenState extends State<MainScreen> {
         _cloudHospitalUpdateCount = cloudUpdates.length;
         _usingCloudHospitalUpdates = cloudUpdates.isNotEmpty;
         _hospitalLoadFailed = false;
+        _isLoading = false;
       });
     } catch (e) {
       debugPrint("Error loading data: $e");
@@ -255,9 +263,11 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<Position?> _getCurrentPosition({
     LocationAccuracy accuracy = LocationAccuracy.best,
+    Duration timeLimit = const Duration(seconds: 15),
   }) async {
     final result = await _locationService.getCurrentPosition(
       accuracy: accuracy,
+      timeLimit: timeLimit,
     );
 
     if (result.isSuccess) {
@@ -350,8 +360,28 @@ class _MainScreenState extends State<MainScreen> {
     return _hospitalRepository.lgaOptions(_allHospitals, _selectedState);
   }
 
+  // Filtering ~38k hospitals is expensive and the getter is read several
+  // times per build, so cache the result until an input changes.
+  List<Hospital>? _filteredCache;
+  Object? _filteredCacheKey;
+
   List<Hospital> get _filteredHospitals {
-    return _hospitalRepository.filterHospitals(
+    final key = (
+      _allHospitals,
+      _searchQuery,
+      _selectedState,
+      _selectedLga,
+      _showFavoritesOnly,
+      _favoriteHospitalIds,
+      _selectedRadiusKm,
+      _sortMode,
+      _currentLocation,
+    );
+    if (_filteredCache != null && key == _filteredCacheKey) {
+      return _filteredCache!;
+    }
+    _filteredCacheKey = key;
+    return _filteredCache = _hospitalRepository.filterHospitals(
       _allHospitals,
       HospitalFilterCriteria(
         query: _searchQuery,
@@ -407,12 +437,8 @@ class _MainScreenState extends State<MainScreen> {
       longitude: location.longitude,
     );
 
-    // SORT THE LIST (Nearest first)
-    _allHospitals.sort((a, b) {
-      if (a.distanceInMeters == null) return 1;
-      if (b.distanceInMeters == null) return -1;
-      return a.distanceInMeters!.compareTo(b.distanceInMeters!);
-    });
+    // Distances changed in place; force the filtered list to re-sort.
+    _filteredCache = null;
 
     if (!mounted) return;
     setState(() {
@@ -461,7 +487,7 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _markHospitalIncorrect(Hospital hospital) async {
     await _verificationService.markIncorrect(_hospitalId(hospital));
-    _showMessage('Marked as reported by users.');
+    _showMessage('Marked this hospital info as wrong.');
     _showReportInfoSheet(hospital);
   }
 
@@ -511,7 +537,7 @@ class _MainScreenState extends State<MainScreen> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     Navigator.pop(context);
-                    _launchReportEmail(hospital: hospital, reason: reason);
+                    _submitReport(hospital: hospital, reason: reason);
                   },
                 ),
             ],
@@ -521,33 +547,71 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Future<void> _launchReportEmail({
+  Future<String?> _promptReportDetails(String reason) {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(reason),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLines: 4,
+            maxLength: 1000,
+            decoration: const InputDecoration(
+              hintText: 'What should be corrected? (optional)',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              child: const Text('Send report'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _submitReport({
     required Hospital hospital,
     required String reason,
   }) async {
+    final details = await _promptReportDetails(reason);
+    if (details == null) return;
+
     final report = FacilityReport.fromHospital(
       hospital: hospital,
       reason: reason,
+      details: details,
     );
     final submitted = await _reportService.submitReport(report);
+    if (submitted) {
+      _showMessage("Report submitted. Thank you.");
+      return;
+    }
 
+    // Cloud submission failed: the report is saved locally, and email is
+    // offered as a backup channel.
     final uri = Uri(
       scheme: 'mailto',
       path: 'reports@medimap.app',
-      queryParameters: {
+      query: encodeQueryParameters({
         'subject': 'MediMap facility correction: ${hospital.name}',
         'body': report.toEmailBody(),
-      },
+      }),
     );
 
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
-      _showMessage(
-        submitted
-            ? "Report submitted. Email could not open on this device."
-            : "Report saved locally. Email could not open on this device.",
-      );
+      _showMessage("Report saved locally. Email could not open on this device.");
     }
   }
 
@@ -625,8 +689,12 @@ class _MainScreenState extends State<MainScreen> {
         : await showContactPickerSheet(context: context, contacts: contacts);
     if (selectedContacts == null || selectedContacts.isEmpty) return;
 
-    // Get the high-accuracy position
-    final pos = await _getCurrentPosition(accuracy: LocationAccuracy.high);
+    // Don't keep the user waiting on GPS: fall back to last known location.
+    _showMessage("Getting your location...");
+    final pos = await _getCurrentPosition(
+      accuracy: LocationAccuracy.high,
+      timeLimit: const Duration(seconds: 10),
+    );
     final lastKnownLocation = pos == null
         ? await _locationService.loadLastKnownLocation()
         : null;
@@ -672,7 +740,6 @@ class _MainScreenState extends State<MainScreen> {
       return;
     }
 
-    // Encode the message to handle spaces and symbols correctly
     final Uri smsUri = _sosService.smsUri(
       contact: selectedContacts.map((contact) => contact.phone).join(','),
       message: confirmedMessage,
@@ -817,7 +884,6 @@ class _MainScreenState extends State<MainScreen> {
             ),
 
       // 3. FLOATING SOS BUTTON
-      // This is likely where the duplicate was. Ensure this block appears ONLY ONCE.
       floatingActionButton: FloatingActionButton(
         onPressed: _sendSOS,
         backgroundColor: Colors.red,

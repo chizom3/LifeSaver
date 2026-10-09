@@ -9,6 +9,7 @@ class FacilityReport {
   final String reportId;
   final bool isCloudReport;
   final String reason;
+  final String details;
   final String hospitalKey;
   final String hospitalName;
   final String state;
@@ -23,6 +24,7 @@ class FacilityReport {
     this.reportId = '',
     this.isCloudReport = false,
     required this.reason,
+    this.details = '',
     required this.hospitalKey,
     required this.hospitalName,
     required this.state,
@@ -37,9 +39,11 @@ class FacilityReport {
   factory FacilityReport.fromHospital({
     required Hospital hospital,
     required String reason,
+    String details = '',
   }) {
     return FacilityReport(
       reason: reason,
+      details: details,
       hospitalKey: hospital.hospitalKey,
       hospitalName: hospital.name,
       state: hospital.state,
@@ -57,6 +61,7 @@ class FacilityReport {
       reportId: json['reportId']?.toString() ?? '',
       isCloudReport: json['isCloudReport'] == true,
       reason: json['reason']?.toString() ?? '',
+      details: json['details']?.toString() ?? '',
       hospitalKey: json['hospitalKey']?.toString() ?? '',
       hospitalName: json['hospitalName']?.toString() ?? '',
       state: json['state']?.toString() ?? '',
@@ -89,6 +94,7 @@ class FacilityReport {
       'reportId': reportId,
       'isCloudReport': isCloudReport,
       'reason': reason,
+      'details': details,
       'hospitalKey': hospitalKey,
       'hospitalName': hospitalName,
       'state': state,
@@ -115,6 +121,7 @@ class FacilityReport {
       'Created at: ${createdAt.toIso8601String()}',
       '',
       'Correction details:',
+      details,
     ].join('\n');
   }
 }

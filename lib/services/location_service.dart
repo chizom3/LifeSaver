@@ -48,6 +48,7 @@ class LocationService {
 
   Future<LocationResult> getCurrentPosition({
     LocationAccuracy accuracy = LocationAccuracy.best,
+    Duration timeLimit = const Duration(seconds: 15),
   }) async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -70,7 +71,10 @@ class LocationService {
 
     try {
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: LocationSettings(accuracy: accuracy),
+        locationSettings: LocationSettings(
+          accuracy: accuracy,
+          timeLimit: timeLimit,
+        ),
       );
       await saveLastKnownLocation(
         latitude: position.latitude,

@@ -96,7 +96,7 @@ class _HospitalMapViewState extends State<HospitalMapView> {
   Set<Marker> _buildMarkers() {
     final hospitalMarkers = _clusterHospitals(
       widget.hospitals
-          .where((hospital) => hospital.distanceInMeters != null)
+          .where(_hasCoordinates)
           .take(250)
           .toList(),
     ).map(_buildHospitalOrClusterMarker);
@@ -193,6 +193,12 @@ class _HospitalMapViewState extends State<HospitalMapView> {
     }).toList();
   }
 
+  // Plot by coordinates, not distance, so the map still works without a
+  // location fix.
+  static bool _hasCoordinates(Hospital hospital) {
+    return hospital.latitude != 0.0 || hospital.longitude != 0.0;
+  }
+
   double _clusterBucketSizeDegrees() {
     if (_mapZoom >= 12) return 0.03;
     if (_mapZoom >= 10) return 0.08;
@@ -202,7 +208,7 @@ class _HospitalMapViewState extends State<HospitalMapView> {
 
   void _fitMapToResults() {
     final hospitals = widget.hospitals
-        .where((hospital) => hospital.distanceInMeters != null)
+        .where(_hasCoordinates)
         .take(80)
         .toList();
 
