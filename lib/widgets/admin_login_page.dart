@@ -106,8 +106,9 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
         password: _passwordController.text,
       );
       if (!mounted) return;
-      widget.onSignedIn();
+      // Close the login page before the dashboard is pushed on top.
       Navigator.pop(context);
+      widget.onSignedIn();
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -13,6 +13,13 @@ class FirstAidVoiceService {
     await _tts.setVolume(1.0);
   }
 
+  /// Called when speech ends on its own, is cancelled, or fails.
+  void setOnFinished(void Function() onFinished) {
+    _tts.setCompletionHandler(onFinished);
+    _tts.setCancelHandler(onFinished);
+    _tts.setErrorHandler((_) => onFinished());
+  }
+
   Future<void> readGuide(FirstAidGuide guide) async {
     await configure();
     await _tts.stop();

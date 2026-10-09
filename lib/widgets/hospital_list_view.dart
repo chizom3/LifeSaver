@@ -11,7 +11,7 @@ class HospitalListView extends StatelessWidget {
   final ValueChanged<Hospital> onToggleFavorite;
   final ValueChanged<Hospital> onCall;
   final ValueChanged<Hospital> onDirections;
-  final VoidCallback onRefreshLocation;
+  final Future<void> Function() onRefreshLocation;
   final VoidCallback onShowMore;
 
   const HospitalListView({
@@ -55,7 +55,7 @@ class HospitalListView extends StatelessWidget {
     final canShowMore = visibleHospitals.length < hospitals.length;
 
     return RefreshIndicator(
-      onRefresh: () async => onRefreshLocation(),
+      onRefresh: onRefreshLocation,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 144),

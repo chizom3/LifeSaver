@@ -24,6 +24,14 @@ class _FirstAidDetailPageState extends State<FirstAidDetailPage> {
   bool _isReading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _voiceService.setOnFinished(() {
+      if (mounted) setState(() => _isReading = false);
+    });
+  }
+
+  @override
   void dispose() {
     _voiceService.stop();
     super.dispose();

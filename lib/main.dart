@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show PlatformDispatcher, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -109,6 +111,9 @@ class _MainScreenState extends State<MainScreen> {
   String _sortMode = 'nearest';
   Set<String> _favoriteHospitalIds = {};
   int _visibleHospitalCount = 100;
+  Timer? _searchDebounce;
+  Future<void>? _locationRequest;
+  bool _sosInProgress = false;
 
   @override
   void initState() {
@@ -119,6 +124,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -402,7 +408,14 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   // 2. Get Location & Sort List
-  Future<void> _determinePosition() async {
+  // Startup, the map, and refresh can all ask at once; share one request.
+  Future<void> _determinePosition() {
+    return _locationRequest ??= _determinePositionNow().whenComplete(() {
+      _locationRequest = null;
+    });
+  }
+
+  Future<void> _determinePositionNow() async {
     final position = await _getCurrentPosition();
     if (position == null) {
       final lastKnownLocation = await _locationService.loadLastKnownLocation();
@@ -642,6 +655,17 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _sendSOS({bool testMode = false}) async {
+    // Ignore repeat taps while an SOS flow is already open.
+    if (_sosInProgress) return;
+    _sosInProgress = true;
+    try {
+      await _runSos(testMode: testMode);
+    } finally {
+      _sosInProgress = false;
+    }
+  }
+
+  Future<void> _runSos({required bool testMode}) async {
     final prefs = await SharedPreferences.getInstance();
     final contactNames = prefs.getStringList('contact_names') ?? [];
     final contactRelationships =
@@ -1116,11 +1140,16 @@ class _MainScreenState extends State<MainScreen> {
       sortMode: _sortMode,
       resultCount: _filteredHospitals.length,
       onSearchChanged: (value) {
-        setState(() {
-          _searchQuery = value;
+        // Filtering ~38k hospitals per keystroke is wasteful; wait for a pause.
+        _searchDebounce?.cancel();
+        _searchDebounce = Timer(const Duration(milliseconds: 250), () {
+          if (!mounted) return;
+          setState(() {
+            _searchQuery = value;
+          });
+          _onFiltersChanged();
+          onSheetChanged?.call();
         });
-        _onFiltersChanged();
-        onSheetChanged?.call();
       },
       onStateChanged: (value) {
         setState(() {
@@ -1159,6 +1188,7 @@ class _MainScreenState extends State<MainScreen> {
         onSheetChanged?.call();
       },
       onClearSearch: () {
+        _searchDebounce?.cancel();
         _searchController.clear();
         setState(() {
           _searchQuery = '';
@@ -1167,6 +1197,7 @@ class _MainScreenState extends State<MainScreen> {
         onSheetChanged?.call();
       },
       onClearFilters: () {
+        _searchDebounce?.cancel();
         _searchController.clear();
         setState(() {
           _searchQuery = '';
@@ -1316,7 +1347,10 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                         children: [
                           _buildSearchAndFilters(
-                            onSheetChanged: () => setSheetState(() {}),
+                            // Debounced search can fire after the sheet closes.
+                            onSheetChanged: () {
+                              if (context.mounted) setSheetState(() {});
+                            },
                           ),
                         ],
                       ),

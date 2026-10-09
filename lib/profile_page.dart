@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -233,8 +235,13 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     final prefs = await SharedPreferences.getInstance();
+    final previousPhoto = prefs.getString('photo_url') ?? '';
+    final photo = _photoUrlCtrl.text.trim();
     await prefs.setString('name', _nameCtrl.text.trim());
-    await prefs.setString('photo_url', _photoUrlCtrl.text.trim());
+    await prefs.setString('photo_url', photo);
+    if (!kIsWeb && previousPhoto != photo) {
+      await _deleteStoredPhoto(previousPhoto);
+    }
     await prefs.setString('age', _ageCtrl.text.trim());
     await prefs.setString('blood', _bloodCtrl.text.trim());
     await prefs.setString('address', _addressCtrl.text.trim());
@@ -737,6 +744,10 @@ class _ProfilePageState extends State<ProfilePage> {
     if (photoValue.startsWith('http')) {
       return NetworkImage(photoValue);
     }
+    // dart:io File is unavailable on web; picked images there are blob URLs.
+    if (kIsWeb) {
+      return photoValue.startsWith('blob:') ? NetworkImage(photoValue) : null;
+    }
     if (photoValue.isNotEmpty && File(photoValue).existsSync()) {
       return FileImage(File(photoValue));
     }
@@ -751,9 +762,41 @@ class _ProfilePageState extends State<ProfilePage> {
     );
     if (image == null) return;
 
+    final path = kIsWeb ? image.path : await _persistPhoto(image);
+    if (!mounted) return;
     setState(() {
-      _photoUrlCtrl.text = image.path;
+      _photoUrlCtrl.text = path;
     });
+  }
+
+  /// Picked images live in a cache folder the OS may clear, so copy the
+  /// photo into app storage before saving its path.
+  Future<String> _persistPhoto(XFile image) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final extension = image.path.contains('.')
+          ? image.path.substring(image.path.lastIndexOf('.'))
+          : '.jpg';
+      final target =
+          '${directory.path}${Platform.pathSeparator}profile_photo_'
+          '${DateTime.now().millisecondsSinceEpoch}$extension';
+      await image.saveTo(target);
+      return target;
+    } catch (_) {
+      return image.path;
+    }
+  }
+
+  /// Removes a photo this page copied into app storage once it's replaced.
+  Future<void> _deleteStoredPhoto(String path) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      if (path.isEmpty || !path.startsWith(directory.path)) return;
+      final file = File(path);
+      if (await file.exists()) await file.delete();
+    } catch (_) {
+      // Leaving an orphaned file behind is harmless.
+    }
   }
 
   Future<void> _pickPhoneContact() async {
