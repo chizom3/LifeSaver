@@ -18,6 +18,7 @@ import 'services/favorites_service.dart';
 import 'services/hospital_verification_service.dart';
 import 'services/hospital_update_service.dart';
 import 'services/location_service.dart';
+import 'services/medical_id_store.dart';
 import 'services/report_service.dart';
 import 'services/sos_service.dart';
 import 'widgets/admin_dashboard_page.dart';
@@ -94,6 +95,7 @@ class _MainScreenState extends State<MainScreen> {
       HospitalVerificationService();
   final HospitalUpdateService _hospitalUpdateService = HospitalUpdateService();
   final LocationService _locationService = LocationService();
+  final MedicalIdStore _medicalIdStore = MedicalIdStore();
   final ReportService _reportService = ReportService(
     enableCloudSubmissions: true,
   );
@@ -221,9 +223,9 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _loadMedicalIdStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final contacts = prefs.getStringList('contact_phones') ?? [];
-    final legacyContact = (prefs.getString('contact') ?? '').trim();
+    final snapshot = await _medicalIdStore.load();
+    final contacts = snapshot.list('contact_phones');
+    final legacyContact = snapshot.string('contact').trim();
     if (!mounted) return;
     setState(() {
       _hasEmergencyContact =
@@ -666,24 +668,24 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _runSos({required bool testMode}) async {
-    final prefs = await SharedPreferences.getInstance();
-    final contactNames = prefs.getStringList('contact_names') ?? [];
+    final snapshot = await _medicalIdStore.load();
+    final contactNames = snapshot.list('contact_names');
     final contactRelationships =
-        prefs.getStringList('contact_relationships') ?? [];
-    var contactPhones = prefs.getStringList('contact_phones') ?? [];
-    final legacyContact = _cleanPhoneNumber(prefs.getString('contact') ?? '');
+        snapshot.list('contact_relationships');
+    var contactPhones = snapshot.list('contact_phones');
+    final legacyContact = _cleanPhoneNumber(snapshot.string('contact'));
     if (contactPhones.isEmpty && legacyContact.isNotEmpty) {
       contactPhones = [legacyContact];
     }
-    final String name = (prefs.getString('name') ?? '').trim();
-    final String age = (prefs.getString('age') ?? '').trim();
-    final String blood = (prefs.getString('blood') ?? '').trim();
-    final String address = (prefs.getString('address') ?? '').trim();
-    final String conditions = (prefs.getString('conditions') ?? '').trim();
-    final String medications = (prefs.getString('medications') ?? '').trim();
+    final String name = (snapshot.string('name')).trim();
+    final String age = (snapshot.string('age')).trim();
+    final String blood = (snapshot.string('blood')).trim();
+    final String address = (snapshot.string('address')).trim();
+    final String conditions = (snapshot.string('conditions')).trim();
+    final String medications = (snapshot.string('medications')).trim();
     final String preferredHospital =
-        (prefs.getString('preferred_hospital') ?? '').trim();
-    final String note = (prefs.getString('note') ?? '').trim();
+        (snapshot.string('preferred_hospital')).trim();
+    final String note = (snapshot.string('note')).trim();
     final contacts = <EmergencyContact>[];
 
     for (var index = 0; index < contactPhones.length; index++) {

@@ -7,7 +7,7 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'services/medical_id_store.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -57,6 +57,7 @@ class _ProfilePageState extends State<ProfilePage> {
     'Other',
   ];
   final ImagePicker _imagePicker = ImagePicker();
+  final MedicalIdStore _store = MedicalIdStore();
 
   bool _isEditing = false;
 
@@ -93,39 +94,39 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final contactNames = prefs.getStringList('contact_names') ?? [];
+    final snapshot = await _store.load();
+    final contactNames = snapshot.list('contact_names');
     final contactRelationships =
-        prefs.getStringList('contact_relationships') ?? [];
-    var contactPhones = prefs.getStringList('contact_phones') ?? [];
-    var allergies = prefs.getStringList('allergy_items') ?? [];
-    var medications = prefs.getStringList('medication_items') ?? [];
+        snapshot.list('contact_relationships');
+    var contactPhones = snapshot.list('contact_phones');
+    var allergies = snapshot.list('allergy_items');
+    var medications = snapshot.list('medication_items');
 
-    final legacyContact = prefs.getString('contact') ?? '';
+    final legacyContact = snapshot.string('contact');
     if (contactPhones.isEmpty && legacyContact.trim().isNotEmpty) {
       contactPhones = [legacyContact];
     }
     if (allergies.isEmpty) {
-      final note = prefs.getString('note') ?? '';
+      final note = snapshot.string('note');
       if (note.trim().isNotEmpty) allergies = [note.trim()];
     }
     if (medications.isEmpty) {
-      final legacyMedications = prefs.getString('medications') ?? '';
+      final legacyMedications = snapshot.string('medications');
       medications = _splitItems(legacyMedications);
     }
 
     if (!mounted) return;
     setState(() {
-      _nameCtrl.text = prefs.getString('name') ?? '';
-      _photoUrlCtrl.text = prefs.getString('photo_url') ?? '';
-      _ageCtrl.text = prefs.getString('age') ?? '';
-      _bloodCtrl.text = prefs.getString('blood') ?? '';
-      _addressCtrl.text = prefs.getString('address') ?? '';
-      _conditionsCtrl.text = prefs.getString('conditions') ?? '';
-      _medicationsCtrl.text = prefs.getString('medications') ?? '';
-      _preferredHospitalCtrl.text = prefs.getString('preferred_hospital') ?? '';
-      _noteCtrl.text = prefs.getString('note') ?? '';
-      _criticalWarningCtrl.text = prefs.getString('critical_warning') ?? '';
+      _nameCtrl.text = snapshot.string('name');
+      _photoUrlCtrl.text = snapshot.string('photo_url');
+      _ageCtrl.text = snapshot.string('age');
+      _bloodCtrl.text = snapshot.string('blood');
+      _addressCtrl.text = snapshot.string('address');
+      _conditionsCtrl.text = snapshot.string('conditions');
+      _medicationsCtrl.text = snapshot.string('medications');
+      _preferredHospitalCtrl.text = snapshot.string('preferred_hospital');
+      _noteCtrl.text = snapshot.string('note');
+      _criticalWarningCtrl.text = snapshot.string('critical_warning');
 
       _resetControllers(_allergyCtrls, allergies.isEmpty ? [''] : allergies);
       _resetControllers(
@@ -234,31 +235,34 @@ class _ProfilePageState extends State<ProfilePage> {
       return;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final previousPhoto = prefs.getString('photo_url') ?? '';
+    final previousPhoto = (await _store.load()).string('photo_url');
     final photo = _photoUrlCtrl.text.trim();
-    await prefs.setString('name', _nameCtrl.text.trim());
-    await prefs.setString('photo_url', photo);
+    try {
+      await _store.save({
+        'name': _nameCtrl.text.trim(),
+        'photo_url': photo,
+        'age': _ageCtrl.text.trim(),
+        'blood': _bloodCtrl.text.trim(),
+        'address': _addressCtrl.text.trim(),
+        'conditions': _conditionsCtrl.text.trim(),
+        'medications': medications.join('; '),
+        'preferred_hospital': _preferredHospitalCtrl.text.trim(),
+        'note': _noteCtrl.text.trim(),
+        'critical_warning': _criticalWarningCtrl.text.trim(),
+        'allergy_items': allergies,
+        'medication_items': medications,
+        'contact_names': contactNames,
+        'contact_phones': contactPhones,
+        'contact_relationships': contactRelationships,
+        'contact': contactPhones.first,
+      });
+    } catch (_) {
+      _showSnackBar('Could not save your Medical ID. Please try again.');
+      return;
+    }
     if (!kIsWeb && previousPhoto != photo) {
       await _deleteStoredPhoto(previousPhoto);
     }
-    await prefs.setString('age', _ageCtrl.text.trim());
-    await prefs.setString('blood', _bloodCtrl.text.trim());
-    await prefs.setString('address', _addressCtrl.text.trim());
-    await prefs.setString('conditions', _conditionsCtrl.text.trim());
-    await prefs.setString('medications', medications.join('; '));
-    await prefs.setString(
-      'preferred_hospital',
-      _preferredHospitalCtrl.text.trim(),
-    );
-    await prefs.setString('note', _noteCtrl.text.trim());
-    await prefs.setString('critical_warning', _criticalWarningCtrl.text.trim());
-    await prefs.setStringList('allergy_items', allergies);
-    await prefs.setStringList('medication_items', medications);
-    await prefs.setStringList('contact_names', contactNames);
-    await prefs.setStringList('contact_phones', contactPhones);
-    await prefs.setStringList('contact_relationships', contactRelationships);
-    await prefs.setString('contact', contactPhones.first);
 
     if (!mounted) return;
     setState(() {

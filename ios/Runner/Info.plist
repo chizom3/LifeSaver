@@ -18,6 +18,8 @@
 	<string>MediMap uses your location to find and sort nearby hospitals.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>MediMap uses your location to share your emergency position when you send an SOS.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>MediMap lets you pick an emergency contact from your phone contacts for SOS alerts.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>MediMap lets you choose a profile photo for your Medical ID.</string>
 	<key>CFBundlePackageType</key>

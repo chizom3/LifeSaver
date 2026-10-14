@@ -6,6 +6,7 @@ import 'package:medimap/repositories/hospital_repository.dart';
 import 'package:medimap/services/favorites_service.dart';
 import 'package:medimap/services/hospital_verification_service.dart';
 import 'package:medimap/services/hospital_update_service.dart';
+import 'package:medimap/services/medical_id_store.dart';
 import 'package:medimap/services/report_service.dart';
 import 'package:medimap/services/sos_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -459,4 +460,88 @@ void main() {
 
     expect(merged, isEmpty);
   });
+
+  group('MedicalIdStore', () {
+    test('migrates legacy SharedPreferences into encrypted storage', () async {
+      SharedPreferences.setMockInitialValues({
+        'name': 'Ada',
+        'blood': 'O+',
+        'contact_phones': ['+2348000000000'],
+        'has_seen_onboarding': true,
+      });
+      final secrets = _FakeSecrets();
+
+      final snapshot = await MedicalIdStore(secrets: secrets).load();
+
+      expect(snapshot.string('name'), 'Ada');
+      expect(snapshot.list('contact_phones'), ['+2348000000000']);
+      expect(secrets.data['medical_id_v1'], contains('Ada'));
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.containsKey('name'), isFalse);
+      expect(prefs.containsKey('contact_phones'), isFalse);
+      // Unrelated settings are left alone.
+      expect(prefs.getBool('has_seen_onboarding'), isTrue);
+    });
+
+    test('keeps legacy data readable when encrypted storage fails', () async {
+      SharedPreferences.setMockInitialValues({
+        'contact_phones': ['+2348000000000'],
+      });
+      final secrets = _FakeSecrets()..failWrites = true;
+
+      final snapshot = await MedicalIdStore(secrets: secrets).load();
+
+      expect(snapshot.list('contact_phones'), ['+2348000000000']);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getStringList('contact_phones'), isNotEmpty);
+    });
+
+    test('treats an undecryptable blob as empty instead of throwing', () async {
+      SharedPreferences.setMockInitialValues({});
+      final secrets = _FakeSecrets()..failReads = true;
+
+      final snapshot = await MedicalIdStore(secrets: secrets).load();
+
+      expect(snapshot.string('name'), '');
+      expect(snapshot.list('contact_phones'), isEmpty);
+    });
+
+    test('save round-trips and ignores unknown keys', () async {
+      SharedPreferences.setMockInitialValues({});
+      final store = MedicalIdStore(secrets: _FakeSecrets());
+
+      await store.save({
+        'name': 'Ada',
+        'allergy_items': ['Penicillin'],
+        'not_a_medical_id_key': 'dropped',
+      });
+      final snapshot = await store.load();
+
+      expect(snapshot.string('name'), 'Ada');
+      expect(snapshot.list('allergy_items'), ['Penicillin']);
+      expect(snapshot.string('not_a_medical_id_key'), '');
+    });
+  });
+}
+
+class _FakeSecrets implements SecretStorage {
+  final Map<String, String> data = {};
+  bool failReads = false;
+  bool failWrites = false;
+
+  @override
+  Future<String?> read(String key) async {
+    if (failReads) throw StateError('cannot decrypt');
+    return data[key];
+  }
+
+  @override
+  Future<void> write(String key, String value) async {
+    if (failWrites) throw StateError('keystore unavailable');
+    data[key] = value;
+  }
+
+  @override
+  Future<void> delete(String key) async => data.remove(key);
 }
