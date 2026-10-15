@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,6 +9,7 @@ enum LocationFailure {
   serviceDisabled,
   permissionDenied,
   permissionDeniedForever,
+  timedOut,
   unavailable,
 }
 
@@ -14,9 +17,15 @@ class LocationResult {
   final Position? position;
   final LocationFailure? failure;
 
-  const LocationResult.success(this.position) : failure = null;
+  /// True when [position] is the phone's cached fix, not a fresh one.
+  final bool isCached;
 
-  const LocationResult.failure(this.failure) : position = null;
+  const LocationResult.success(this.position, {this.isCached = false})
+    : failure = null;
+
+  const LocationResult.failure(this.failure)
+    : position = null,
+      isCached = false;
 
   bool get isSuccess => position != null;
 }
@@ -46,9 +55,13 @@ class LocationService {
   static const String _lastLongitudeKey = 'last_location_longitude';
   static const String _lastSavedAtKey = 'last_location_saved_at';
 
+  /// Gets a fresh fix. If [onCachedPosition] is given, the phone's cached
+  /// fix (if any) is reported first so callers can show something at once.
+  /// When the fresh fix times out, the cached fix is returned instead.
   Future<LocationResult> getCurrentPosition({
-    LocationAccuracy accuracy = LocationAccuracy.best,
-    Duration timeLimit = const Duration(seconds: 15),
+    LocationAccuracy accuracy = LocationAccuracy.high,
+    Duration timeLimit = const Duration(seconds: 30),
+    void Function(Position position)? onCachedPosition,
   }) async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -69,6 +82,9 @@ class LocationService {
       );
     }
 
+    final cached = await _cachedDevicePosition();
+    if (cached != null) onCachedPosition?.call(cached);
+
     try {
       final position = await Geolocator.getCurrentPosition(
         locationSettings: LocationSettings(
@@ -81,8 +97,21 @@ class LocationService {
         longitude: position.longitude,
       );
       return LocationResult.success(position);
+    } on TimeoutException {
+      if (cached != null) return LocationResult.success(cached, isCached: true);
+      return const LocationResult.failure(LocationFailure.timedOut);
     } catch (_) {
+      if (cached != null) return LocationResult.success(cached, isCached: true);
       return const LocationResult.failure(LocationFailure.unavailable);
+    }
+  }
+
+  /// The OS's most recent fix, available instantly when the phone has one.
+  Future<Position?> _cachedDevicePosition() async {
+    try {
+      return await Geolocator.getLastKnownPosition();
+    } catch (_) {
+      return null; // Unsupported on web, or no cached fix.
     }
   }
 

@@ -14,6 +14,10 @@ class HospitalListView extends StatelessWidget {
   final Future<void> Function() onRefreshLocation;
   final VoidCallback onShowMore;
 
+  /// Location status shown above the list; null hides the banner.
+  final String? locationNotice;
+  final bool isFindingLocation;
+
   const HospitalListView({
     super.key,
     required this.hospitals,
@@ -26,6 +30,8 @@ class HospitalListView extends StatelessWidget {
     required this.onDirections,
     required this.onRefreshLocation,
     required this.onShowMore,
+    this.locationNotice,
+    this.isFindingLocation = false,
   });
 
   @override
@@ -47,9 +53,7 @@ class HospitalListView extends StatelessWidget {
       );
     }
 
-    final hasDistances = hospitals.any((hospital) {
-      return hospital.distanceInMeters != null;
-    });
+    final showNotice = locationNotice != null;
 
     final visibleHospitals = hospitals.take(visibleHospitalCount).toList();
     final canShowMore = visibleHospitals.length < hospitals.length;
@@ -62,9 +66,9 @@ class HospitalListView extends StatelessWidget {
         itemCount:
             visibleHospitals.length +
             (canShowMore ? 1 : 0) +
-            (hasDistances ? 0 : 1),
+            (showNotice ? 1 : 0),
         itemBuilder: (context, index) {
-          if (!hasDistances && index == 0) {
+          if (showNotice && index == 0) {
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),
@@ -75,24 +79,34 @@ class HospitalListView extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.location_off, color: Colors.orange.shade900),
+                  if (isFindingLocation)
+                    SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.orange.shade900,
+                      ),
+                    )
+                  else
+                    Icon(Icons.location_off, color: Colors.orange.shade900),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Location is off. You can still search hospitals and open directions.',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                      locationNotice!,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
-                  TextButton(
-                    onPressed: onRefreshLocation,
-                    child: const Text('Retry'),
-                  ),
+                  if (!isFindingLocation)
+                    TextButton(
+                      onPressed: onRefreshLocation,
+                      child: const Text('Retry'),
+                    ),
                 ],
               ),
             );
           }
 
-          final hospitalIndex = hasDistances ? index : index - 1;
+          final hospitalIndex = showNotice ? index - 1 : index;
 
           if (hospitalIndex == visibleHospitals.length) {
             return Padding(

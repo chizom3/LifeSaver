@@ -81,6 +81,9 @@ class _MainScreenState extends State<MainScreen> {
   bool _isLoading = true;
   bool _hospitalLoadFailed = false;
   bool _hasLocationPermission = false;
+  // Why the last location request failed; null while searching or after
+  // success. Drives the banner above the hospital list.
+  LocationFailure? _locationFailure;
   bool _showOnboarding = false;
   bool _hasAcceptedMedicalDisclaimer = false;
   bool _hasEmergencyContact = false;
@@ -269,24 +272,25 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  Future<Position?> _getCurrentPosition({
-    LocationAccuracy accuracy = LocationAccuracy.best,
-    Duration timeLimit = const Duration(seconds: 15),
+  Future<LocationResult> _getCurrentPosition({
+    LocationAccuracy accuracy = LocationAccuracy.high,
+    Duration timeLimit = const Duration(seconds: 30),
+    void Function(Position position)? onCachedPosition,
   }) async {
     final result = await _locationService.getCurrentPosition(
       accuracy: accuracy,
       timeLimit: timeLimit,
+      onCachedPosition: onCachedPosition,
     );
 
-    if (result.isSuccess) {
-      if (mounted) {
-        setState(() => _hasLocationPermission = true);
-      }
-      return result.position;
-    }
-
-    if (!mounted) return null;
-    setState(() => _hasLocationPermission = false);
+    // Timeouts mean permission is fine; only service/permission problems
+    // should hide the map's my-location layer.
+    final permissionOk =
+        result.isSuccess ||
+        result.failure == LocationFailure.timedOut ||
+        result.failure == LocationFailure.unavailable;
+    if (mounted) setState(() => _hasLocationPermission = permissionOk);
+    if (result.isSuccess || !mounted) return result;
 
     switch (result.failure) {
       case LocationFailure.serviceDisabled:
@@ -301,12 +305,32 @@ class _MainScreenState extends State<MainScreen> {
         _showMessage(
           "Location permission is blocked. Enable it from your phone settings.",
         );
+      case LocationFailure.timedOut:
+        _showMessage(
+          "Couldn't get a GPS fix. Try near a window, then tap Retry.",
+        );
       case LocationFailure.unavailable:
       case null:
         _showMessage("Could not get your current location. Please try again.");
     }
 
-    return null;
+    return result;
+  }
+
+  String? get _locationNotice {
+    if (_currentLocation != null) return null;
+    return switch (_locationFailure) {
+      null => 'Finding your location...',
+      LocationFailure.serviceDisabled =>
+        'Location is off on your phone. Turn it on to see the nearest hospitals.',
+      LocationFailure.permissionDenied =>
+        'Location permission is needed to sort hospitals by distance.',
+      LocationFailure.permissionDeniedForever =>
+        'Location permission is blocked. Enable it in your phone settings.',
+      LocationFailure.timedOut =>
+        "Couldn't get a GPS fix yet. Try near a window, then tap Retry.",
+      LocationFailure.unavailable => "Couldn't get your location. Tap Retry.",
+    };
   }
 
   void _showMessage(String message) {
@@ -418,29 +442,32 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _determinePositionNow() async {
-    final position = await _getCurrentPosition();
-    if (position == null) {
-      final lastKnownLocation = await _locationService.loadLastKnownLocation();
-      if (lastKnownLocation != null) {
-        _applyLocation(
-          LatLng(lastKnownLocation.latitude, lastKnownLocation.longitude),
-        );
-        if (!mounted) return;
-        setState(() {
-          _isLoading = false;
-        });
-        _showMessage("Using your last known location.");
-        return;
-      }
+    if (mounted) setState(() => _locationFailure = null);
 
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
-      return;
+    // Show distances from the phone's cached fix right away, then refine.
+    final result = await _getCurrentPosition(
+      onCachedPosition: (cached) {
+        _applyLocation(LatLng(cached.latitude, cached.longitude));
+      },
+    );
+    if (!mounted) return;
+
+    final position = result.position;
+    if (position != null) {
+      _applyLocation(LatLng(position.latitude, position.longitude));
+    } else if (_currentLocation == null) {
+      final saved = await _locationService.loadLastKnownLocation();
+      if (saved != null) {
+        _applyLocation(LatLng(saved.latitude, saved.longitude));
+        _showMessage("Using your last known location.");
+      }
     }
-    final location = LatLng(position.latitude, position.longitude);
-    _applyLocation(location);
+
+    if (!mounted) return;
+    setState(() {
+      _locationFailure = result.failure;
+      _isLoading = false;
+    });
   }
 
   void _applyLocation(LatLng location) {
@@ -717,10 +744,11 @@ class _MainScreenState extends State<MainScreen> {
 
     // Don't keep the user waiting on GPS: fall back to last known location.
     _showMessage("Getting your location...");
-    final pos = await _getCurrentPosition(
+    final result = await _getCurrentPosition(
       accuracy: LocationAccuracy.high,
       timeLimit: const Duration(seconds: 10),
     );
+    final pos = result.position;
     final lastKnownLocation = pos == null
         ? await _locationService.loadLastKnownLocation()
         : null;
@@ -730,7 +758,8 @@ class _MainScreenState extends State<MainScreen> {
     final String mapLink = pos != null
         ? "https://www.google.com/maps/search/?api=1&query=${pos.latitude},${pos.longitude}"
         : lastKnownLocation!.mapLink;
-    final usingLastKnownLocation = pos == null;
+    // A cached fix may be minutes old, so label it honestly in the SMS.
+    final usingLastKnownLocation = pos == null || result.isCached;
     final String message = _sosService.buildMessage(
       mapLink: mapLink,
       name: name,
@@ -1431,6 +1460,8 @@ class _MainScreenState extends State<MainScreen> {
         _launchMap(hospital);
       },
       onRefreshLocation: _determinePosition,
+      locationNotice: _locationNotice,
+      isFindingLocation: _currentLocation == null && _locationFailure == null,
       onShowMore: () {
         setState(() {
           _visibleHospitalCount += 100;
