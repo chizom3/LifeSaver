@@ -1,0 +1,22 @@
+# LifeSaver - https://app.life-saver.com.ng/
+# Search engines may index the app; heavy files are excluded to save bandwidth.
+
+User-agent: *
+Allow: /
+# Local engine copy; the app loads CanvasKit from Google's CDN instead.
+Disallow: /canvaskit/
+# 4.6 MB hospital dataset, not useful in search results.
+Disallow: /assets/assets/data/
+
+# SEO and AI scrapers that crawl heavily without sending visitors.
+User-agent: AhrefsBot
+User-agent: SemrushBot
+User-agent: MJ12bot
+User-agent: DotBot
+User-agent: PetalBot
+User-agent: Bytespider
+User-agent: GPTBot
+User-agent: CCBot
+Disallow: /
+
+Sitemap: https://app.life-saver.com.ng/sitemap.xml

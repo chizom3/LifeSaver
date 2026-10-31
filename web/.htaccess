@@ -3,10 +3,10 @@
 # Compress text assets. Flutter's main.dart.js shrinks ~70% and the hospital
 # data ~65%, so this is the single biggest bandwidth saving on the server.
 <IfModule mod_brotli.c>
-  AddOutputFilterByType BROTLI_COMPRESS text/html text/css text/plain text/javascript application/javascript application/json application/manifest+json application/wasm image/svg+xml font/otf font/ttf
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/css text/plain text/javascript application/javascript application/json application/manifest+json application/xml text/xml application/wasm image/svg+xml font/otf font/ttf
 </IfModule>
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css text/plain text/javascript application/javascript application/json application/manifest+json application/wasm image/svg+xml font/otf font/ttf
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/javascript application/javascript application/json application/manifest+json application/xml text/xml application/wasm image/svg+xml font/otf font/ttf
 </IfModule>
 
 <IfModule mod_mime.c>
