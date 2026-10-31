@@ -20,7 +20,7 @@ Created key:
 
 Allowed Android app:
 
-- Package name: `com.rydertechnologies.medimap`
+- Package name: `com.rydertechnologies.lifesaver`
 - SHA-1 certificate fingerprint: use the release/upload keystore SHA-1 before publishing
 
 Local debug fingerprint for development only:

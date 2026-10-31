@@ -5,7 +5,7 @@
 Current Android package/application ID:
 
 ```text
-com.rydertechnologies.medimap
+com.rydertechnologies.lifesaver
 ```
 
 Use matching IDs for Firebase Android apps, Google Cloud Android key restrictions, and release signing.
@@ -51,7 +51,7 @@ Use separate keys for Android and Web.
 
 Restrict by:
 
-- Package name: `com.rydertechnologies.medimap`
+- Package name: `com.rydertechnologies.lifesaver`
 - SHA-1 certificate fingerprint for the signing certificate
 - Required APIs only, especially Maps SDK for Android
 

@@ -18,7 +18,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.rydertechnologies.medimap"
+    namespace = "com.rydertechnologies.lifesaver"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.3.13750724"
 
@@ -32,7 +32,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.rydertechnologies.medimap"
+        applicationId = "com.rydertechnologies.lifesaver"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

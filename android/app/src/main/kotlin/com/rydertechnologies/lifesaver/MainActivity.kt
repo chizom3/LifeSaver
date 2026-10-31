@@ -1,4 +1,4 @@
-package com.rydertechnologies.medimap
+package com.rydertechnologies.lifesaver
 
 import io.flutter.embedding.android.FlutterActivity
 
