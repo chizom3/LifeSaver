@@ -32,7 +32,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         showLogo: true,
         title: 'Find nearby care',
         body:
-            'Use MediMap to search health facilities, compare distance, call, and open directions.',
+            'Use LifeSaver to search health facilities, compare distance, call, and open directions.',
       ),
       const _OnboardingStep(
         icon: Icons.medical_information,
@@ -51,7 +51,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MediMap'),
+        title: const Text('LifeSaver'),
         actions: [
           TextButton(onPressed: widget.onFinish, child: const Text('Skip')),
         ],
@@ -99,7 +99,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     icon: Icon(isLastPage ? Icons.check : Icons.arrow_forward),
-                    label: Text(isLastPage ? 'Start MediMap' : 'Next'),
+                    label: Text(isLastPage ? 'Start LifeSaver' : 'Next'),
                     onPressed: () {
                       if (isLastPage) {
                         widget.onFinish();
@@ -154,7 +154,7 @@ class _OnboardingStep extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(24),
               child: Image.asset(
-                'assets/images/medimap_logo.png',
+                'assets/images/lifesaver_logo.png',
                 width: 112,
                 height: 112,
               ),

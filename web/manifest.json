@@ -1,6 +1,6 @@
 {
-    "name": "MediMap",
-    "short_name": "MediMap",
+    "name": "LifeSaver",
+    "short_name": "LifeSaver",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#000000",

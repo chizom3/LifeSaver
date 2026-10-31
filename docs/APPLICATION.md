@@ -1,8 +1,8 @@
-# MediMap Application Documentation
+# LifeSaver Application Documentation
 
 ## 1. Purpose
 
-MediMap is an emergency healthcare locator application. It helps users find nearby health facilities, view first aid guidance, store Medical ID information, and prepare SOS messages with location details.
+LifeSaver is an emergency healthcare locator application. It helps users find nearby health facilities, view first aid guidance, store Medical ID information, and prepare SOS messages with location details.
 
 The app is a support tool. It does not replace emergency services, professional medical advice, or official facility verification.
 
@@ -98,7 +98,7 @@ Admin users can sign in and access management screens. Production admin access m
 
 ### Find A Hospital
 
-1. User opens MediMap.
+1. User opens LifeSaver.
 2. App loads offline hospital data.
 3. App attempts to get current location.
 4. User views nearby facilities in the hospital list.
@@ -317,7 +317,7 @@ build\web
 Production domain:
 
 ```text
-https://medimap.ryderenergy.com.ng/
+https://app.life-saver.com.ng/
 ```
 
 ## 10. Known Operational Notes

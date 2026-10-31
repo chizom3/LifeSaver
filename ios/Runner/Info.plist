@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>MediMap</string>
+	<string>LifeSaver</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,15 +13,15 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>MediMap</string>
+	<string>LifeSaver</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>MediMap uses your location to find and sort nearby hospitals.</string>
+	<string>LifeSaver uses your location to find and sort nearby hospitals.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>MediMap uses your location to share your emergency position when you send an SOS.</string>
+	<string>LifeSaver uses your location to share your emergency position when you send an SOS.</string>
 	<key>NSContactsUsageDescription</key>
-	<string>MediMap lets you pick an emergency contact from your phone contacts for SOS alerts.</string>
+	<string>LifeSaver lets you pick an emergency contact from your phone contacts for SOS alerts.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>MediMap lets you choose a profile photo for your Medical ID.</string>
+	<string>LifeSaver lets you choose a profile photo for your Medical ID.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

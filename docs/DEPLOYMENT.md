@@ -1,4 +1,4 @@
-# MediMap Deployment Guide
+# LifeSaver Deployment Guide
 
 This guide covers local verification, Android release builds, and web release builds.
 
@@ -68,13 +68,13 @@ Do not open `build\web\index.html` directly. Flutter web should be served throug
 Production web domain:
 
 ```text
-https://medimap.ryderenergy.com.ng/
+https://app.life-saver.com.ng/
 ```
 
 The web Google Maps key should allow:
 
 ```text
-https://medimap.ryderenergy.com.ng/*
+https://app.life-saver.com.ng/*
 ```
 
 For local web testing, temporarily allow:

@@ -81,7 +81,7 @@ class EmergencyModePage extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'MediMap is support only and does not replace emergency services.',
+                'LifeSaver is support only and does not replace emergency services.',
                 style: TextStyle(color: Colors.white60),
                 textAlign: TextAlign.center,
               ),

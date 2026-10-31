@@ -15,7 +15,7 @@ Application restriction:
 
 Created key:
 
-- Display name: `MediMap Android Maps key`
+- Display name: `LifeSaver Android Maps key`
 - Resource: `projects/1019209914571/locations/global/keys/fef67123-1364-459f-8b32-2c8e694bbd1d`
 
 Allowed Android app:
@@ -47,12 +47,12 @@ Application restriction:
 
 Created key:
 
-- Display name: `MediMap Web Maps key`
+- Display name: `LifeSaver Web Maps key`
 - Resource: `projects/1019209914571/locations/global/keys/cca25910-f7f6-415b-9c8a-e79e0f913b17`
 
 Allowed referrers:
 
-- Production domain: `https://medimap.ryderenergy.com.ng/*`
+- Production domain: `https://app.life-saver.com.ng/*`
 - Firebase Hosting domains if used: `https://life-saver-17939.web.app/*` and `https://life-saver-17939.firebaseapp.com/*`
 - Local development domains only while needed, for example `http://localhost:*/*`
 

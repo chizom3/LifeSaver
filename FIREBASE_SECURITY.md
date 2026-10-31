@@ -1,6 +1,6 @@
 # Firebase Security Setup
 
-MediMap uses two Firestore collections:
+LifeSaver uses two Firestore collections:
 
 - `facility_reports`: reports submitted by normal app users.
 - `hospital_updates`: approved hospital additions, corrections, and closures.

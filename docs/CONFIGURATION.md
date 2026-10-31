@@ -1,4 +1,4 @@
-# MediMap Configuration Guide
+# LifeSaver Configuration Guide
 
 ## App Identity
 
@@ -12,7 +12,7 @@ Use matching IDs for Firebase Android apps, Google Cloud Android key restriction
 
 ## Firebase
 
-MediMap uses Firebase for:
+LifeSaver uses Firebase for:
 
 - Firestore cloud hospital updates and report/admin workflows.
 - Analytics.
@@ -60,7 +60,7 @@ Restrict by:
 Restrict by HTTP referrer:
 
 ```text
-https://medimap.ryderenergy.com.ng/*
+https://app.life-saver.com.ng/*
 ```
 
 For local testing, add the local port being used:
@@ -88,7 +88,7 @@ web/maps_config.js
 Example:
 
 ```js
-window.MEDIMAP_MAPS_API_KEY = "YOUR_WEB_MAPS_KEY";
+window.LIFESAVER_GOOGLE_MAPS_API_KEY = "YOUR_WEB_MAPS_KEY";
 ```
 
 ## Release Signing

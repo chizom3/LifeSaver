@@ -1,4 +1,4 @@
-# MediMap Troubleshooting
+# LifeSaver Troubleshooting
 
 ## Release Web Does Not Show New Changes
 
@@ -59,7 +59,7 @@ http://localhost:8081/*
 For production, allow:
 
 ```text
-https://medimap.ryderenergy.com.ng/*
+https://app.life-saver.com.ng/*
 ```
 
 ## Firestore Offline Warning

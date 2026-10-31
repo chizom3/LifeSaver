@@ -1,4 +1,4 @@
-# MediMap UI Guide
+# LifeSaver UI Guide
 
 This document summarizes the current layout behavior for Android/mobile and web/desktop.
 
@@ -7,7 +7,7 @@ This document summarizes the current layout behavior for Android/mobile and web/
 The top app bar uses the shorter title:
 
 ```text
-MediMap
+LifeSaver
 ```
 
 Only emergency mode stays as a direct action. Lower-priority actions such as Medical ID, refresh, test SOS, admin, disclaimer, privacy, data status, and report storage are in the overflow menu.

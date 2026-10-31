@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'MediMap',
+      title: 'LifeSaver',
       theme: ThemeData(primarySwatch: Colors.red, useMaterial3: true),
       home: const MainScreen(),
     );
@@ -168,7 +168,7 @@ class _MainScreenState extends State<MainScreen> {
     initWatch.stop();
     _startupWatch.stop();
     debugPrint(
-      'MediMap startup: init=${initWatch.elapsedMilliseconds}ms total=${_startupWatch.elapsedMilliseconds}ms hospitals=${_allHospitals.length}',
+      'LifeSaver startup: init=${initWatch.elapsedMilliseconds}ms total=${_startupWatch.elapsedMilliseconds}ms hospitals=${_allHospitals.length}',
     );
   }
 
@@ -251,7 +251,7 @@ class _MainScreenState extends State<MainScreen> {
       );
       watch.stop();
       debugPrint(
-        'MediMap data: loaded ${hospitals.length} hospitals with ${cloudUpdates.length} cloud updates in ${watch.elapsedMilliseconds}ms',
+        'LifeSaver data: loaded ${hospitals.length} hospitals with ${cloudUpdates.length} cloud updates in ${watch.elapsedMilliseconds}ms',
       );
       if (!mounted) return;
       setState(() {
@@ -643,9 +643,9 @@ class _MainScreenState extends State<MainScreen> {
     // offered as a backup channel.
     final uri = Uri(
       scheme: 'mailto',
-      path: 'reports@medimap.app',
+      path: 'support@life-saver.com.ng',
       query: encodeQueryParameters({
-        'subject': 'MediMap facility correction: ${hospital.name}',
+        'subject': 'LifeSaver facility correction: ${hospital.name}',
         'body': report.toEmailBody(),
       }),
     );
@@ -829,7 +829,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       // 1. TOP BAR
       appBar: AppBar(
-        title: const Text('MediMap'),
+        title: const Text('LifeSaver'),
         actions: [
           IconButton(
             tooltip: 'Emergency mode',

@@ -24,7 +24,7 @@ class MedicalDisclaimerPage extends StatelessWidget {
             const Icon(Icons.emergency, color: Colors.red, size: 48),
             const SizedBox(height: 16),
             Text(
-              'MediMap is an emergency support tool.',
+              'LifeSaver is an emergency support tool.',
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),

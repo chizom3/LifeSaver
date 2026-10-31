@@ -1,7 +1,7 @@
 import 'dart:js_interop';
 
 // Defined in web/maps_loader.js.
-@JS('medimapLoadGoogleMaps')
+@JS('lifesaverLoadGoogleMaps')
 external JSPromise<JSAny?> _loadGoogleMaps();
 
 Future<void> ensureMapsScriptLoaded() async {

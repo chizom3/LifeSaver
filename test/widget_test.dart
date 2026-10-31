@@ -1,14 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:medimap/first_aid_guide.dart';
-import 'package:medimap/hospital.dart';
-import 'package:medimap/repositories/first_aid_repository.dart';
-import 'package:medimap/repositories/hospital_repository.dart';
-import 'package:medimap/services/favorites_service.dart';
-import 'package:medimap/services/hospital_verification_service.dart';
-import 'package:medimap/services/hospital_update_service.dart';
-import 'package:medimap/services/medical_id_store.dart';
-import 'package:medimap/services/report_service.dart';
-import 'package:medimap/services/sos_service.dart';
+import 'package:lifesaver/first_aid_guide.dart';
+import 'package:lifesaver/hospital.dart';
+import 'package:lifesaver/repositories/first_aid_repository.dart';
+import 'package:lifesaver/repositories/hospital_repository.dart';
+import 'package:lifesaver/services/favorites_service.dart';
+import 'package:lifesaver/services/hospital_verification_service.dart';
+import 'package:lifesaver/services/hospital_update_service.dart';
+import 'package:lifesaver/services/medical_id_store.dart';
+import 'package:lifesaver/services/report_service.dart';
+import 'package:lifesaver/services/sos_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

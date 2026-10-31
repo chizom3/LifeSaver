@@ -12,7 +12,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           children: [
             Text(
-              'MediMap Privacy Policy',
+              'LifeSaver Privacy Policy',
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),

@@ -1,6 +1,6 @@
-# MediMap
+# LifeSaver
 
-MediMap is a Flutter emergency healthcare locator app. It helps users find nearby health facilities, call or navigate to them, save Medical ID details, and prepare SOS SMS alerts with location information.
+LifeSaver is a Flutter emergency healthcare locator app. It helps users find nearby health facilities, call or navigate to them, save Medical ID details, and prepare SOS SMS alerts with location information.
 
 ## Core features
 
@@ -18,7 +18,7 @@ MediMap is a Flutter emergency healthcare locator app. It helps users find nearb
 
 ## Safety notes
 
-MediMap is a support tool, not a replacement for official emergency services or medical advice. Facility data, phone numbers, and locations should be verified before production use. Users should confirm SOS message details before sending.
+LifeSaver is a support tool, not a replacement for official emergency services or medical advice. Facility data, phone numbers, and locations should be verified before production use. Users should confirm SOS message details before sending.
 
 ## Report submissions
 
@@ -47,7 +47,7 @@ flutter test
 ## Important setup
 
 - Android requires a `MAPS_API_KEY` Gradle property or environment variable for Google Maps.
-- Use separate Google Maps API keys for Android and Web. Restrict the Android key to package `com.rydertechnologies.medimap` plus the release/upload certificate SHA-1, and restrict the Web key to `https://medimap.ryderenergy.com.ng/*`.
+- Use separate Google Maps API keys for Android and Web. Restrict the Android key to package `com.rydertechnologies.medimap` plus the release/upload certificate SHA-1, and restrict the Web key to `https://app.life-saver.com.ng/*`.
 - Android permissions currently cover internet access, fine/coarse location, image picking, and package visibility for phone, map, email, and SMS intents.
 - Emergency contacts and Medical ID data are stored locally with `shared_preferences`.
 
