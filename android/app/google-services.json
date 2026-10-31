@@ -1,39 +1,178 @@
 {
-    "project_info":  {
-                         "project_number":  "1019209914571",
-                         "project_id":  "life-saver-17939",
-                         "storage_bucket":  "life-saver-17939.firebasestorage.app"
-                     },
-    "client":  [
-                   {
-                       "client_info":  {
-                                           "mobilesdk_app_id":  "1:1019209914571:android:5e7746d90e6aafeaad634e",
-                                           "android_client_info":  {
-                                                                       "package_name":  "com.rydertechnologies.medimap"
-                                                                   }
-                                       },
-                       "oauth_client":  [
-                                            {
-                                                "client_id":  "1019209914571-r4249m6jsdfpn6m27g744eu31trsg34t.apps.googleusercontent.com",
-                                                "client_type":  3
-                                            }
-                                        ],
-                       "api_key":  [
-                                       {
-                                           "current_key":  "AIzaSyDDKSbQECgsyvqJ-H5AEqJyrVRMT8ZqHmQ"
-                                       }
-                                   ],
-                       "services":  {
-                                        "appinvite_service":  {
-                                                                  "other_platform_oauth_client":  [
-                                                                                                      {
-                                                                                                          "client_id":  "1019209914571-r4249m6jsdfpn6m27g744eu31trsg34t.apps.googleusercontent.com",
-                                                                                                          "client_type":  3
-                                                                                                      }
-                                                                                                  ]
-                                                              }
-                                    }
-                   }
-               ],
-    "configuration_version":  "1"
+  "project_info": {
+    "project_number": "1019209914571",
+    "project_id": "life-saver-17939",
+    "storage_bucket": "life-saver-17939.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1019209914571:android:e1a88e2e16ad22c9ad634e",
+        "android_client_info": {
+          "package_name": "com.example.medimap"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1019209914571-r4249m6jsdfpn6m27g744eu31trsg34t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDKSbQECgsyvqJ-H5AEqJyrVRMT8ZqHmQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1019209914571-r4249m6jsdfpn6m27g744eu31trsg34t.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1019209914571-90f03a5pnogi1ipj7n3gi44sifodigqm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.medimap"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1019209914571:android:86eafcc875752f90ad634e",
+        "android_client_info": {
+          "package_name": "com.ryderenergy.livesaver"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1019209914571-kigsc7hgovbnfli6lq3ce8vrvkoqqgvk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ryderenergy.livesaver",
+            "certificate_hash": "ec3a258598cd81dbc192fd798792da8a59f2cd3a"
+          }
+        },
+        {
+          "client_id": "1019209914571-r4249m6jsdfpn6m27g744eu31trsg34t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDKSbQECgsyvqJ-H5AEqJyrVRMT8ZqHmQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1019209914571-r4249m6jsdfpn6m27g744eu31trsg34t.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1019209914571-90f03a5pnogi1ipj7n3gi44sifodigqm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.medimap"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1019209914571:android:7364ab9a8f179939ad634e",
+        "android_client_info": {
+          "package_name": "com.rydertechnologies.lifesaver"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1019209914571-r4249m6jsdfpn6m27g744eu31trsg34t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDKSbQECgsyvqJ-H5AEqJyrVRMT8ZqHmQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1019209914571-r4249m6jsdfpn6m27g744eu31trsg34t.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1019209914571-90f03a5pnogi1ipj7n3gi44sifodigqm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.medimap"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1019209914571:android:5e7746d90e6aafeaad634e",
+        "android_client_info": {
+          "package_name": "com.rydertechnologies.medimap"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1019209914571-dd0at7mhh2hmvnnov105vu9np84nnjk3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rydertechnologies.medimap",
+            "certificate_hash": "6339b293af1ee88930cf9c0765855abcfa14a24c"
+          }
+        },
+        {
+          "client_id": "1019209914571-q0end9mlcd7n6kljb2behne3hbbe6o17.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rydertechnologies.medimap",
+            "certificate_hash": "ac0732e72b21b62174414089f7d4115a76b0c744"
+          }
+        },
+        {
+          "client_id": "1019209914571-r4249m6jsdfpn6m27g744eu31trsg34t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDKSbQECgsyvqJ-H5AEqJyrVRMT8ZqHmQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1019209914571-r4249m6jsdfpn6m27g744eu31trsg34t.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1019209914571-90f03a5pnogi1ipj7n3gi44sifodigqm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.medimap"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
 }

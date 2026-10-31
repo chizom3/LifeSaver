@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDDKSbQECgsyvqJ-H5AEqJyrVRMT8ZqHmQ',
-    appId: '1:1019209914571:android:5e7746d90e6aafeaad634e',
+    appId: '1:1019209914571:android:7364ab9a8f179939ad634e',
     messagingSenderId: '1019209914571',
     projectId: 'life-saver-17939',
     storageBucket: 'life-saver-17939.firebasestorage.app',
