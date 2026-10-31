@@ -279,9 +279,64 @@ class HospitalRepository {
   }
 }
 
+/// Parses the bundled hospital data.
+///
+/// Version 2 is a compact column format (see tool/compact_hospitals.py):
+/// `{"version": 2, "columns": [...], "dictionaries": {...}, "rows": [[...]]}`.
+/// Repetitive columns are dictionary-encoded, so a row holds an index into
+/// `dictionaries[column]` instead of the string. The legacy format, a list of
+/// `data-*` objects, is still accepted.
 List<Hospital> parseHospitals(String response) {
-  final data = json.decode(response) as List<dynamic>;
-  return data.map((json) {
-    return Hospital.fromJson(json as Map<String, dynamic>);
+  final data = json.decode(response);
+  if (data is List) {
+    return data.map((json) {
+      return Hospital.fromJson(json as Map<String, dynamic>);
+    }).toList();
+  }
+
+  final table = data as Map<String, dynamic>;
+  final columns = (table['columns'] as List).cast<String>();
+  final dictionaries = (table['dictionaries'] as Map<String, dynamic>).map(
+    (column, values) => MapEntry(column, (values as List).cast<String>()),
+  );
+  final positions = {
+    for (var index = 0; index < columns.length; index++) columns[index]: index,
+  };
+
+  String text(List<dynamic> row, String column) {
+    final index = positions[column];
+    if (index == null) return '';
+    final value = row[index];
+    final dictionary = dictionaries[column];
+    if (dictionary != null) return dictionary[value as int];
+    return value?.toString() ?? '';
+  }
+
+  double number(List<dynamic> row, String column) {
+    final index = positions[column];
+    return index == null ? 0.0 : (row[index] as num).toDouble();
+  }
+
+  return (table['rows'] as List).map((raw) {
+    final row = raw as List<dynamic>;
+    return Hospital(
+      id: text(row, 'id'),
+      uniqueId: text(row, 'uniqueId'),
+      name: text(row, 'name'),
+      state: text(row, 'state'),
+      lga: text(row, 'lga'),
+      ward: text(row, 'ward'),
+      latitude: number(row, 'lat'),
+      longitude: number(row, 'lng'),
+      phone: text(row, 'phone'),
+      physicalLocation: text(row, 'physicalLocation'),
+      alternateNumber: text(row, 'alternateNumber'),
+      facilityLevel: text(row, 'facilityLevel'),
+      licenseStatus: text(row, 'licenseStatus'),
+      operationStatus: text(row, 'operationStatus'),
+      operationalDays: text(row, 'operationalDays'),
+      registrationStatus: text(row, 'registrationStatus'),
+      ownership: text(row, 'ownership'),
+    );
   }).toList();
 }

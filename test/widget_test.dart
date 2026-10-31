@@ -461,6 +461,24 @@ void main() {
     expect(merged, isEmpty);
   });
 
+  test('parseHospitals reads the compact v2 format', () {
+    final hospitals = parseHospitals('''
+{"version":2,
+ "columns":["id","uniqueId","name","state","lga","ward","lat","lng","phone"],
+ "dictionaries":{"state":["Lagos","Ogun"]},
+ "rows":[["1","27/03/1","First Line Clinics",1,"Ado Odo/Ota","Ota 2",6.69553,3.23143,"0807-971-7504"]]}
+''');
+
+    final hospital = hospitals.single;
+    expect(hospital.state, 'Ogun');
+    expect(hospital.latitude, 6.69553);
+    expect(hospital.physicalLocation, '');
+    expect(
+      hospital.hospitalKey,
+      '27/03/1|first line clinics|ogun|ado odo/ota|6.69553|3.23143',
+    );
+  });
+
   group('MedicalIdStore', () {
     test('migrates legacy SharedPreferences into encrypted storage', () async {
       SharedPreferences.setMockInitialValues({

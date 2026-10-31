@@ -1,0 +1,28 @@
+# Bandwidth settings for Apache / LiteSpeed hosts (ignored by other servers).
+
+# Compress text assets. Flutter's main.dart.js shrinks ~70% and the hospital
+# data ~65%, so this is the single biggest bandwidth saving on the server.
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/css text/plain text/javascript application/javascript application/json application/manifest+json application/wasm image/svg+xml font/otf font/ttf
+</IfModule>
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/javascript application/javascript application/json application/manifest+json application/wasm image/svg+xml font/otf font/ttf
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType application/wasm .wasm
+  AddType application/json .json
+  AddType application/manifest+json .webmanifest
+  AddType font/otf .otf
+  AddType font/ttf .ttf
+</IfModule>
+
+# Flutter web file names are not content-hashed, so a long cache would serve
+# stale code after a deploy. "no-cache" makes browsers revalidate instead:
+# unchanged files come back as a tiny 304 response, not a full download.
+<IfModule mod_headers.c>
+  Header set Cache-Control "no-cache"
+  <FilesMatch "\.(png|ico)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+</IfModule>

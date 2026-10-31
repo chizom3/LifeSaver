@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../hospital.dart';
+import '../services/maps_script_loader.dart';
 
 class HospitalMapView extends StatefulWidget {
   final List<Hospital> hospitals;
@@ -37,6 +38,8 @@ class _HospitalMapViewState extends State<HospitalMapView> {
   GoogleMapController? _controller;
   double _mapZoom = 12;
   LatLng? _lastAnimatedLocation;
+  // On web the Maps script is fetched only once this tab is opened.
+  Future<void> _mapsReady = ensureMapsScriptLoaded();
 
   @override
   void didUpdateWidget(covariant HospitalMapView oldWidget) {
@@ -58,6 +61,47 @@ class _HospitalMapViewState extends State<HospitalMapView> {
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _mapsReady,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) return _buildLoadError();
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return _buildMap();
+      },
+    );
+  }
+
+  Widget _buildLoadError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.map_outlined, size: 48, color: Colors.grey),
+            const SizedBox(height: 12),
+            const Text(
+              "The map couldn't load. Check your connection; the hospital "
+              'list still works without it.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try again'),
+              onPressed: () {
+                setState(() => _mapsReady = ensureMapsScriptLoaded());
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMap() {
     return Stack(
       children: [
         GoogleMap(
